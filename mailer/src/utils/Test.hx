@@ -7,13 +7,13 @@ class Test {
 	========================================================================== */
 	public static function traceHeader(array:Array<String>):Void {
 		
-		var strings:Array<String> = [];
+		var string:String = '';
 		
 		for (p in 0...array.length) {
-			strings.push(p + ':' + array[p]);
+			string += p + ':' + array[p] + ',';
 		}
 		
-		trace(strings.join(','));
+		trace(string);
 		
 	}
 	

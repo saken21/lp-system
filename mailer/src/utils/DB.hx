@@ -113,8 +113,8 @@ class DB {
 		
 		Message.set(messages);
 		
-		trace('NG Domain : ' + ngDomains.length + '件 ' + ngDomains);
-		trace('配信停止ユーザー : ' + stopUsers.length + '件 ' + stopUsers);
+		trace(ngDomains);
+		trace(stopUsers);
 		
 		_func();
 		

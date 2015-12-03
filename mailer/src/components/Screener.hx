@@ -3,34 +3,31 @@ package src.components;
 import js.JQuery;
 import jp.saken.utils.Handy;
 import src.utils.Data;
+import src.utils.Csv;
 import src.utils.ER;
 
 class Screener {
 	
-	private static var _mains  :Map<String,Dynamic>;
+	private static var _mains  :Map<Int,Dynamic>;
 	private static var _counter:Int;
 	private static var _isBusy :Bool;
 	
 	private static inline var HEAD_LENGTH:Int = 9;
 	
 	/* =======================================================================
-	Public - Ready
+	Public - Start
 	========================================================================== */
-	public static function ready():Void {
+	public static function start():Void {
 
 		_mains = new Map();
-		Data.setLocalScreened(getLocalScreenedData());
+
+		var localScreenedData:Array<Dynamic> = getLocalScreenedData();
+		Data.setScreened(localScreenedData);
+
+		if (ER.global == null) Csv.export(localScreenedData);
+		else checkGlobalNG(localScreenedData);
 
 	}
-	
-		/* =======================================================================
-		Public - Start
-		========================================================================== */
-		public static function start():Void {
-			
-			startGlobal(Data.getLocalScreened());
-
-		}
 		
 		/* =======================================================================
 		Public - Get Busy
@@ -57,12 +54,11 @@ class Screener {
 			
 			_isBusy  = true;
 			_counter = data.length;
+			
+			Data.clearScreened();
 
-			for (i in 0...data.length) {
-				
-				var info:Map<String,String> = data[i];
-				accessDomain(info['id'],info['domain']);
-				
+			for (p in 0...data.length) {
+				accessDomain(data[p]);
 			}
 
 		}
@@ -80,7 +76,7 @@ class Screener {
 		for (p in 0...rawData.length) {
 			
 			var string:String = rawData[p];
-			var info:Map<String,String> = getInfo(string.split('\t'));
+			var info:Array<String> = getInfo(string.split('\t'));
 			
 			if (info != null) results.push(info);
 			
@@ -95,112 +91,64 @@ class Screener {
 	/* =======================================================================
 	Get Info
 	========================================================================== */
-	private static function getInfo(array:Array<String>):Map<String,String> {
+	private static function getInfo(array:Array<String>):Dynamic {
 		
 		if (array.length < HEAD_LENGTH) return null;
 		
-		var id       :String = array[0];
-		var subID    :String = array[1];
-		var corporate:String = getCorporate(array[5]);
-		var name     :String = getName(array[6],array[7]);
-		var mail     :String = getMailaddress(array[9]);
+		var id       :Int    = Std.parseInt(array[0]);
+		var subID    :Int    = Std.parseInt(array[1]);
+		var lastdate :String = array[2];
+		var count    :String = array[3];
+		var price    :String = array[4];
+		var corporate:String = array[5];
+		var name     :String = array[6] + ' ' + array[7];
+		var address  :String = array[8];
+		var mail     :String = array[9];
+		var datetime :String = array[10];
 		
-		if (corporate == null || name == null || mail == null) {
+		if (corporate.length > 0) {
+			
+			corporate = getReplaced(corporate);
+			if (ER.local.match(corporate)) return null;
+			
+		} else {
+			
 			return null;
+		
 		}
 		
-		var domain:String = getDomain(mail.split('@')[1]);
-		if (domain == null) return null;
+		if (name.length == 0) return null;
+		if (!(mail.length > 0 && ~/@/.match(mail))) return null;
+		if (ER.ngDomains.match(mail.split('@')[1])) return null;
+		if (ER.stopUsers.match(mail)) return null;
 		
-		if (isBadID(id,Std.parseInt(subID),corporate,mail,domain)) {
-			return null;
-		}
+		name = getReplaced(name);
 		
-		return ['id'=>id, 'domain'=>domain];
-		
-	}
-	
-	/* =======================================================================
-	Get Corporate
-	========================================================================== */
-	private static function getCorporate(value:String):String {
-		
-		if (value.length < 1) return null;
-		
-		value = getReplaced(value);
-		if (ER.ngWords.match(value)) return null;
-		
-		return value;
-		
-	}
-	
-	/* =======================================================================
-	Get Name
-	========================================================================== */
-	private static function getName(a:String,b:String):String {
-		
-		if (a.length < 1 && b.length < 1) return null;
-		
-		var fullname:String = getReplaced(a + ' ' + b);
-		if (fullname.indexOf('株式会社') > -1) fullname = 'ご担当者';
-		
-		return fullname;
-		
-	}
-	
-	/* =======================================================================
-	Get Mailaddress
-	========================================================================== */
-	private static function getMailaddress(value:String):String {
-		
-		if (value.length < 1) return null;
-		if (!(~/@/.match(value))) return null;
-		if (ER.stopUsers.match(value)) return null;
-		
-		return value;
-		
-	}
-	
-	/* =======================================================================
-	Get Domain
-	========================================================================== */
-	private static function getDomain(value:String):String {
-		
-		if (value.length < 1) return null;
-		if (ER.ngDomains.match(value)) return null;
-		
-		return value;
-		
-	}
-	
-	/* =======================================================================
-	Is Bad ID
-	========================================================================== */
-	private static function isBadID(id:String,subID:Int,corporate:String,mail:String,domain:String):Bool {
+		if (name.indexOf('株式会社') > -1) name = 'ご担当者';
 		
 		if (subID > 1) {
 			
 			var main:Dynamic = _mains[id];
-			if (main == null) return true;
+			if (main == null) return null;
 			
-			var c:String        = main.c;
-			var d:String        = main.d;
-			var m:Array<String> = main.m;
+			var co    :String        = main.co;
+			var domain:String        = main.domain;
+			var mails :Array<String> = main.mails;
 			
-			if (c == null || d == null) return true;
+			if (co == null || domain == null) return null;
 			
-			if (corporate.indexOf(c) < 0 || mail.indexOf(d) < 0) return true;
-			if (m.indexOf(mail) > -1) return true;
+			if (corporate.indexOf(co) < 0 || mail.indexOf(domain) < 0) return null;
+			if (mails.indexOf(mail) > -1) return null;
 			
-			_mains[id].m.push(mail);
+			mails.push(mail);
 			
 		} else {
 			
-			_mains[id] = { c:corporate, d:domain, m:[mail] };
+			_mains.set(id,{ co:corporate, domain:mail.split('@')[1], mails:[mail] });
 			
 		}
 		
-		return false;
+		return { id:id, subID:subID, date:lastdate, corporate:corporate, name:name, mail:mail };
 		
 	}
 	
@@ -220,9 +168,25 @@ class Screener {
 	}
 	
 	/* =======================================================================
+	Check Global NG
+	========================================================================== */
+	private static function checkGlobalNG(localScreenedData:Array<Dynamic>):Void {
+		
+		Data.clearSaved();
+		
+		var sliceLength:Int = View.getSliceLength();
+		
+		if (sliceLength > 0) View.setSlicedCSV(Handy.getSlicedArray(localScreenedData,sliceLength));
+		else startGlobal(localScreenedData);
+		
+	}
+	
+	/* =======================================================================
 	Access Domain
 	========================================================================== */
-	private static function accessDomain(id:String,domain:String):Void {
+	private static function accessDomain(info:Dynamic):Void {
+		
+		var domain:String = info.mail.split('@')[1];
 
 		untyped $.ajax({
 			
@@ -231,7 +195,7 @@ class Screener {
 			
 		}).done(function(data:Dynamic):Void {
 			
-			analyzeKeyword(data.results[0],id);
+			analyzeKeyword(data.results[0],info);
 			removeCounter();
 			
 		}).fail(removeCounter);
@@ -241,7 +205,7 @@ class Screener {
 	/* =======================================================================
 	Analyze Keyword
 	========================================================================== */
-	private static function analyzeKeyword(value:String,id:String):Void {
+	private static function analyzeKeyword(value:String,info:Dynamic):Void {
 
 		if (value == null) return;
 
@@ -256,7 +220,7 @@ class Screener {
 		
 		trace('Keyword : ' + keywords);
 
-		if (!ER.ngWords.match(keywords)) Data.pushWebScreened(id);
+		if (!ER.global.match(keywords)) Data.pushScreened(info);
 		
 	}
 	
@@ -266,12 +230,14 @@ class Screener {
 	private static function removeCounter():Void {
 		
 		_counter--;
-		
+
 		if (_counter == 0) {
-			
+
+			Data.concatSaved();
+			Csv.export(Data.getScreened());
+
 			_isBusy = false;
-			View.showSaveButton();
-			
+
 		}
 		
 		trace(_counter);

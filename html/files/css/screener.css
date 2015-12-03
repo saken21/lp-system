@@ -1,0 +1,75 @@
+@charset "UTF-8";
+
+@import "common/layout.css";
+
+/*-------------------------------------------------------------------------
+	All
+/*-----------------------------------------------------------------------*/
+#all {
+	display:none;
+}
+
+/*-------------------------------------------------------------------------
+	Header
+/*-----------------------------------------------------------------------*/
+#header {
+	margin-bottom:30px;
+}
+
+	#filename {
+		height:20px;
+	}
+
+/*-------------------------------------------------------------------------
+	Form
+/*-----------------------------------------------------------------------*/
+#form {
+}
+
+	#form p {
+		margin-bottom:20px;
+	}
+	
+	#ng-word {
+		width:800px;
+		height:240px;
+	}
+	
+	#screening-length {
+		margin-bottom:30px;
+		padding:5px;
+		border:1px solid #aaa;
+		font-size:12px;
+		text-align:right;
+	}
+	
+	#form ol {
+		margin-bottom:20px;
+	}
+	
+		#form ol li {
+			float:left;
+			margin-right:10px;
+		}
+		
+			#form ol li button {
+				display:none;
+			}
+	
+/*-------------------------------------------------------------------------
+	Screening List
+/*-----------------------------------------------------------------------*/
+#screening-list {
+	display:block;
+	margin-bottom:50px;
+}
+
+	#screening-list a {
+		display:inline-block;
+		margin-right:20px;
+		cursor:pointer;
+	}
+	
+	#screening-list .empty {
+		height:20px;
+	}

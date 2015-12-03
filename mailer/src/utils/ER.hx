@@ -4,16 +4,18 @@ class ER {
 	
 	public static var ngDomains:EReg;
 	public static var stopUsers:EReg;
-	public static var ngWords  :EReg;
+	public static var local    :EReg;
+	public static var global   :EReg;
 	
 	/* =======================================================================
 	Public - Set
 	========================================================================== */
-	public static function set(value:String):Void {
+	public static function set(localNG:String,globalNG:String):Void {
 		
 		ngDomains = getByArray(DB.ngDomains);
 		stopUsers = getByArray(DB.stopUsers);
-		ngWords   = getByText(value);
+		local     = getByText(localNG);
+		global    = getByText(globalNG);
 		
 	}
 	

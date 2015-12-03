@@ -19,7 +19,7 @@ package src;
 import haxe.Http;
 import js.JQuery;
 import jp.saken.utils.Dom;
-import src.components.View;
+import src.components.*;
 import src.utils.DB;
 
 class Main {

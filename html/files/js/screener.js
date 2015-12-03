@@ -69,17 +69,10 @@ HxOverrides.indexOf = function(a,obj,i) {
 	}
 	return -1;
 };
-HxOverrides.iter = function(a) {
-	return { cur : 0, arr : a, hasNext : function() {
-		return this.cur < this.arr.length;
-	}, next : function() {
-		return this.arr[this.cur++];
-	}};
-};
 var Lambda = function() { };
 Lambda.__name__ = true;
 Lambda.exists = function(it,f) {
-	var $it0 = $iterator(it)();
+	var $it0 = it.iterator();
 	while( $it0.hasNext() ) {
 		var x = $it0.next();
 		if(f(x)) return true;
@@ -88,7 +81,7 @@ Lambda.exists = function(it,f) {
 };
 Lambda.filter = function(it,f) {
 	var l = new List();
-	var $it0 = $iterator(it)();
+	var $it0 = it.iterator();
 	while( $it0.hasNext() ) {
 		var x = $it0.next();
 		if(f(x)) l.add(x);
@@ -136,15 +129,6 @@ Std.parseInt = function(x) {
 	if(v == 0 && (HxOverrides.cca(x,1) == 120 || HxOverrides.cca(x,1) == 88)) v = parseInt(x);
 	if(isNaN(v)) return null;
 	return v;
-};
-var StringBuf = function() {
-	this.b = "";
-};
-StringBuf.__name__ = true;
-StringBuf.prototype = {
-	add: function(x) {
-		this.b += Std.string(x);
-	}
 };
 var StringTools = function() { };
 StringTools.__name__ = true;
@@ -251,9 +235,6 @@ haxe.ds.IntMap.prototype = {
 	set: function(key,value) {
 		this.h[key] = value;
 	}
-	,get: function(key) {
-		return this.h[key];
-	}
 };
 haxe.ds.StringMap = function() {
 	this.h = { };
@@ -266,27 +247,6 @@ haxe.ds.StringMap.prototype = {
 	}
 	,get: function(key) {
 		return this.h["$" + key];
-	}
-	,keys: function() {
-		var a = [];
-		for( var key in this.h ) {
-		if(this.h.hasOwnProperty(key)) a.push(key.substr(1));
-		}
-		return HxOverrides.iter(a);
-	}
-	,toString: function() {
-		var s = new StringBuf();
-		s.b += "{";
-		var it = this.keys();
-		while( it.hasNext() ) {
-			var i = it.next();
-			if(i == null) s.b += "null"; else s.b += "" + i;
-			s.b += " => ";
-			s.add(Std.string(this.get(i)));
-			if(it.hasNext()) s.b += ", ";
-		}
-		s.b += "}";
-		return s.b;
 	}
 };
 var jp = {};
@@ -626,87 +586,14 @@ src.Main.onBeforeunload = function(event) {
 	new haxe.Http("files/php/deleteCSV.php").request(true);
 };
 src.components = {};
-src.components.Mailer = function() { };
-src.components.Mailer.__name__ = true;
-src.components.Mailer.send = function() {
-	var data = [];
-	var screenedData = src.utils.Data.getScreened();
-	if(src.components.Mailer._total == null) src.components.Mailer._total = 1;
-	src.components.Mailer._counters = new haxe.ds.StringMap();
-	var _g1 = 0;
-	var _g = screenedData.length;
-	while(_g1 < _g) {
-		var p = _g1++;
-		data.push(src.components.Mailer.ready(screenedData[p]));
-	}
-	console.log(src.components.Mailer._counters.toString());
-	src.utils.Csv["export"](data);
-};
-src.components.Mailer.ready = function(info) {
-	var staff = src.components.Mailer.getStaff(info.id);
-	var staffLastname = staff.lastname;
-	var staffFullname = staffLastname + Std.string(staff.firstname);
-	var staffAlphabet = staff.mailaddress;
-	var staffMail = staffAlphabet + "@graphic.co.jp";
-	var message = src.components.Mailer.getMessage(info.date.length == 0);
-	var subject = message.get("subject");
-	var body = message.get("body");
-	body = StringTools.replace(body,"##1",info.corporate);
-	body = StringTools.replace(body,"##2",info.name);
-	body = StringTools.replace(body,"##3",staffLastname);
-	body = StringTools.replace(body,"##4",staffFullname);
-	body = StringTools.replace(body,"##5",staffMail);
-	body = StringTools.replace(body,"##6",Std.string(src.components.Mailer._total++));
-	body = StringTools.replace(body,"##7",HxOverrides.substr(staffAlphabet,0,2));
-	src.components.Mailer.request(staffFullname,staffMail,info.mail,subject,body);
-	info.staffName = staffLastname;
-	return info;
-};
-src.components.Mailer.getStaff = function(clientID) {
-	var staffID = Std.parseInt(src.utils.DB.supports.get(clientID));
-	var staff;
-	if(staffID == null) {
-		staff = jp.saken.utils.Handy.shuffleArray(src.utils.DB.staffs)[0];
-		staffID = staff.id;
-		src.utils.DB.supports.set(clientID,staffID);
-		staffID;
-		src.utils.DB.insertSupport(clientID,staffID);
-	} else staff = src.utils.DB.staffMap.get(staffID);
-	src.components.Mailer.serCounters(staff.lastname + staff.firstname);
-	return staff;
-};
-src.components.Mailer.serCounters = function(value) {
-	var counter = src.components.Mailer._counters.get(value);
-	if(counter == null) counter = 0;
-	var v = ++counter;
-	src.components.Mailer._counters.set(value,v);
-	v;
-};
-src.components.Mailer.getMessage = function(isFirst) {
-	if(src.utils.Message.first != null && isFirst) return src.utils.Message.first;
-	return src.utils.Message.normal;
-};
-src.components.Mailer.request = function(staffFullname,staffMail,to,subject,body) {
-	if("sakata@graphic.co.jp".length > 0) to = "sakata@graphic.co.jp";
-	console.log(to);
-	var http = new haxe.Http("files/php/sendMail.php");
-	http.onData = function(data) {
-		console.log(data);
-	};
-	http.setParameter("staffFullname",staffFullname);
-	http.setParameter("staffMail",staffMail);
-	http.setParameter("to",to);
-	http.setParameter("subject",subject);
-	http.setParameter("body",body);
-	http.request(true);
-};
 src.components.Screener = function() { };
 src.components.Screener.__name__ = true;
+src.components.Screener.ready = function() {
+	src.components.Screener._mains = new haxe.ds.StringMap();
+	src.utils.Data.setLocalScreened(src.components.Screener.getLocalScreenedData());
+};
 src.components.Screener.start = function() {
-	src.components.Screener._mains = new haxe.ds.IntMap();
-	var localScreenedData = src.components.Screener.getLocalScreenedData();
-	src.utils.Data.setScreened(localScreenedData);
-	if(src.utils.ER.global == null) src.utils.Csv["export"](localScreenedData); else src.components.Screener.checkGlobalNG(localScreenedData);
+	src.components.Screener.startGlobal(src.utils.Data.getLocalScreened());
 };
 src.components.Screener.getBusy = function() {
 	return src.components.Screener._isBusy;
@@ -717,16 +604,16 @@ src.components.Screener.setCounter = function(value) {
 src.components.Screener.startGlobal = function(data) {
 	src.components.Screener._isBusy = true;
 	src.components.Screener._counter = data.length;
-	src.utils.Data.clearScreened();
 	var _g1 = 0;
 	var _g = data.length;
 	while(_g1 < _g) {
-		var p = _g1++;
-		src.components.Screener.accessDomain(data[p]);
+		var i = _g1++;
+		var info = data[i];
+		src.components.Screener.accessDomain(info.get("id"),info.get("domain"));
 	}
 };
 src.components.Screener.getLocalScreenedData = function() {
-	src.components.Screener._mains = new haxe.ds.IntMap();
+	src.components.Screener._mains = new haxe.ds.StringMap();
 	var results = [];
 	var rawData = src.utils.Data.getRaw();
 	var _g1 = 0;
@@ -742,41 +629,60 @@ src.components.Screener.getLocalScreenedData = function() {
 };
 src.components.Screener.getInfo = function(array) {
 	if(array.length < 9) return null;
-	var id = Std.parseInt(array[0]);
-	var subID = Std.parseInt(array[1]);
-	var lastdate = array[2];
-	var count = array[3];
-	var price = array[4];
-	var corporate = array[5];
-	var name = array[6] + " " + array[7];
-	var address = array[8];
-	var mail = array[9];
-	var datetime = array[10];
-	if(corporate.length > 0) {
-		corporate = src.components.Screener.getReplaced(corporate);
-		if(src.utils.ER.local.match(corporate)) return null;
-	} else return null;
-	if(name.length == 0) return null;
-	if(!(mail.length > 0 && new EReg("@","").match(mail))) return null;
-	if(src.utils.ER.ngDomains.match(mail.split("@")[1])) return null;
-	if(src.utils.ER.stopUsers.match(mail)) return null;
-	name = src.components.Screener.getReplaced(name);
-	if(name.indexOf("株式会社") > -1) name = "ご担当者";
+	var id = array[0];
+	var subID = array[1];
+	var corporate = src.components.Screener.getCorporate(array[5]);
+	var name = src.components.Screener.getName(array[6],array[7]);
+	var mail = src.components.Screener.getMailaddress(array[9]);
+	if(corporate == null || name == null || mail == null) return null;
+	var domain = src.components.Screener.getDomain(mail.split("@")[1]);
+	if(domain == null) return null;
+	if(src.components.Screener.isBadID(id,Std.parseInt(subID),corporate,mail,domain)) return null;
+	var _g = new haxe.ds.StringMap();
+	_g.set("id",id);
+	_g.set("domain",domain);
+	return _g;
+};
+src.components.Screener.getCorporate = function(value) {
+	if(value.length < 1) return null;
+	value = src.components.Screener.getReplaced(value);
+	if(src.utils.ER.ngWords.match(value)) return null;
+	return value;
+};
+src.components.Screener.getName = function(a,b) {
+	if(a.length < 1 && b.length < 1) return null;
+	var fullname = src.components.Screener.getReplaced(a + " " + b);
+	if(fullname.indexOf("株式会社") > -1) fullname = "ご担当者";
+	return fullname;
+};
+src.components.Screener.getMailaddress = function(value) {
+	if(value.length < 1) return null;
+	if(!new EReg("@","").match(value)) return null;
+	if(src.utils.ER.stopUsers.match(value)) return null;
+	return value;
+};
+src.components.Screener.getDomain = function(value) {
+	if(value.length < 1) return null;
+	if(src.utils.ER.ngDomains.match(value)) return null;
+	return value;
+};
+src.components.Screener.isBadID = function(id,subID,corporate,mail,domain) {
 	if(subID > 1) {
 		var main = src.components.Screener._mains.get(id);
-		if(main == null) return null;
-		var co = main.co;
-		var domain = main.domain;
-		var mails = main.mails;
-		if(co == null || domain == null) return null;
-		if(corporate.indexOf(co) < 0 || mail.indexOf(domain) < 0) return null;
-		if(HxOverrides.indexOf(mails,mail,0) > -1) return null;
-		mails.push(mail);
+		if(main == null) return true;
+		var c = main.c;
+		var d = main.d;
+		var m = main.m;
+		if(c == null || d == null) return true;
+		if(corporate.indexOf(c) < 0 || mail.indexOf(d) < 0) return true;
+		if(HxOverrides.indexOf(m,mail,0) > -1) return true;
+		src.components.Screener._mains.get(id).m.push(mail);
 	} else {
-		var value = { co : corporate, domain : mail.split("@")[1], mails : [mail]};
-		src.components.Screener._mains.set(id,value);
+		var v = { c : corporate, d : domain, m : [mail]};
+		src.components.Screener._mains.set(id,v);
+		v;
 	}
-	return { id : id, subID : subID, date : lastdate, corporate : corporate, name : name, mail : mail};
+	return false;
 };
 src.components.Screener.getReplaced = function(value) {
 	value = StringTools.replace(value,"⑰","㈲");
@@ -786,19 +692,13 @@ src.components.Screener.getReplaced = function(value) {
 	value = StringTools.replace(value,"&#8226;","・");
 	return value;
 };
-src.components.Screener.checkGlobalNG = function(localScreenedData) {
-	src.utils.Data.clearSaved();
-	var sliceLength = src.components.View.getSliceLength();
-	if(sliceLength > 0) src.components.View.setSlicedCSV(jp.saken.utils.Handy.getSlicedArray(localScreenedData,sliceLength)); else src.components.Screener.startGlobal(localScreenedData);
-};
-src.components.Screener.accessDomain = function(info) {
-	var domain = info.mail.split("@")[1];
+src.components.Screener.accessDomain = function(id,domain) {
 	$.ajax({ type : "GET", url : "http://" + domain}).done(function(data) {
-		src.components.Screener.analyzeKeyword(data.results[0],info);
+		src.components.Screener.analyzeKeyword(data.results[0],id);
 		src.components.Screener.removeCounter();
 	}).fail(src.components.Screener.removeCounter);
 };
-src.components.Screener.analyzeKeyword = function(value,info) {
+src.components.Screener.analyzeKeyword = function(value,id) {
 	if(value == null) return;
 	var jHead = new js.JQuery("<div>" + value.split("<body")[0] + "</div>");
 	var jKeywords = jHead.find("meta[name*=\"eyword\"]");
@@ -807,50 +707,56 @@ src.components.Screener.analyzeKeyword = function(value,info) {
 	if(jDescription.length == 0) jDescription = jHead.find("meta[name=\"DESCRIPTION\"]");
 	var keywords = jKeywords.prop("content") + jDescription.prop("content");
 	console.log("Keyword : " + keywords);
-	if(!src.utils.ER.global.match(keywords)) src.utils.Data.pushScreened(info);
+	if(!src.utils.ER.ngWords.match(keywords)) src.utils.Data.pushWebScreened(id);
 };
 src.components.Screener.removeCounter = function() {
 	src.components.Screener._counter--;
 	if(src.components.Screener._counter == 0) {
-		src.utils.Data.concatSaved();
-		src.utils.Csv["export"](src.utils.Data.getScreened());
 		src.components.Screener._isBusy = false;
+		src.components.View.showSaveButton();
 	}
 	console.log(src.components.Screener._counter);
 };
 src.components.View = function() { };
 src.components.View.__name__ = true;
 src.components.View.init = function() {
-	src.components.View._jAll = new js.JQuery("#all").show();
-	src.components.View._jSubmit = new js.JQuery("#submit");
-	src.components.View._jLocalNG = new js.JQuery("#localNG");
-	src.components.View._jGlobalNG = new js.JQuery("#globalNG");
-	src.components.View._jSliceLength = new js.JQuery("#sliceLength");
-	src.components.View._jCsv = new js.JQuery("#csv");
-	src.components.View._jScreened = new js.JQuery("#screened");
-	src.components.View._jMergeCSV = new js.JQuery("#mergeCSV");
-	src.components.View._jSendMail = new js.JQuery("#sendMail");
-	var jFilename = new js.JQuery("#filename");
-	var dragAndDrop = new jp.saken.ui.DragAndDrop(jp.saken.utils.Dom.jWindow,src.components.View.onLoadedFile);
-	jp.saken.utils.Dom.jWindow.on("onDrop",function(event) {
-		src.components.View.empty();
-		jFilename.text(dragAndDrop.getFilename());
-	});
-	src.components.View._jMergeCSV.on("click",function(event1) {
-		src.utils.Csv.merge();
-	});
-	src.components.View._jSubmit.on("click",src.components.View.submit);
-	src.components.View._jSendMail.on("click",src.components.View.sendMail);
+	var jAll = new js.JQuery("#all").show();
+	var jForm = jAll.find("#form");
+	src.components.View._jFilename = jAll.find("#filename");
+	src.components.View._jNgWord = jForm.find("#ng-word");
+	src.components.View._jScreeningLength = jForm.find("#screening-length");
+	src.components.View._jScreeningList = jAll.find("#screening-list");
+	src.components.View._jButtons = jForm.find("button").on("click",src.components.View.onClick);
+	src.components.View._dragAndDrop = new jp.saken.ui.DragAndDrop(jp.saken.utils.Dom.jWindow,src.components.View.onDropped);
 };
-src.components.View.setScreened = function(html) {
-	src.components.View._jScreened.html(html);
+src.components.View.showSaveButton = function() {
+	src.components.View.showButton("save");
 };
-src.components.View.appendCSV = function(jAnchor) {
-	src.components.View._jCsv.append(jAnchor);
-	src.components.View._jSubmit.removeClass("screening");
-	if(src.components.View._jCsv.find("a").length > 1) src.components.View._jMergeCSV.show();
+src.components.View.onDropped = function(data) {
+	src.components.View._jFilename.text(src.components.View._dragAndDrop.getFilename());
+	var array = data.split("\n");
+	src.components.View.empty(array);
+	src.utils.Test.traceHeader(array[0].split("\t"));
+	console.log("All : " + array.length);
+	src.utils.ER.set(src.components.View._jNgWord.prop("value"));
+	src.components.Screener.ready();
+	src.components.View.setSliced(Std.parseInt(src.components.View._jScreeningLength.prop("value")));
 };
-src.components.View.setSlicedCSV = function(data) {
+src.components.View.onClick = function(event) {
+	var jTarget = new js.JQuery(event.target);
+	var _g = jTarget.prop("class");
+	switch(_g) {
+	case "start":
+		src.components.Screener.start();
+		break;
+	}
+};
+src.components.View.setSliced = function(length) {
+	if(length < 1) {
+		src.components.View.showButton("start");
+		return;
+	}
+	var data = jp.saken.utils.Handy.getSlicedArray(src.utils.Data.getLocalScreened(),length);
 	var html = "";
 	var _g1 = 0;
 	var _g = data.length;
@@ -858,108 +764,25 @@ src.components.View.setSlicedCSV = function(data) {
 		var p = _g1++;
 		html += "<a class=\"slicedData\" data-id=\"" + p + "\">No." + jp.saken.utils.Handy.getFilledNumber(p) + " (" + data[p].length + ")</a>";
 	}
-	src.components.View._jCsv.html(html + "<p class=\"empty\"></p>").find("a").on("click",function(event) {
+	src.components.View._jScreeningList.html(html + "<p class=\"empty\"></p>").find("a").on("click",function(event) {
 		if(src.components.Screener.getBusy()) {
 			jp.saken.utils.Handy.alert("処理中です。しばらくお待ちください。");
 			return;
 		}
-		var id = $(this).data("id");
-		src.utils.Csv.setCurrent(id);
-		src.components.Screener.startGlobal(data[id]);
+		var jTarget = $(this);
+		src.components.Screener.startGlobal(data[jTarget.data("id")]);
+		jTarget.remove();
 	});
 };
-src.components.View.getSliceLength = function() {
-	return Std.parseInt(src.components.View._jSliceLength.prop("value"));
+src.components.View.showButton = function(key) {
+	src.components.View._jButtons.filter("." + key).show();
 };
-src.components.View.onLoadedFile = function(data) {
-	var array = data.split("\n");
-	src.components.View.empty();
-	src.utils.Data.setRaw(array);
-	src.utils.Test.traceHeader(array[0].split("\t"));
-	console.log("All : " + array.length);
-};
-src.components.View.submit = function(event) {
-	if(src.components.View._jSubmit.hasClass("screening") || !src.utils.Data.hasRaw()) return false;
-	src.components.View.empty();
-	src.components.View._jSubmit.addClass("screening");
-	src.utils.Data.shiftRaw();
-	src.utils.ER.set(src.components.View._jLocalNG.prop("value"),src.components.View._jGlobalNG.prop("value"));
-	src.components.Screener.start();
-	return false;
-};
-src.components.View.sendMail = function(event) {
-	var isOK = jp.saken.utils.Dom.window.confirm("メールを送信します。\nよろしいですか？");
-	if(isOK) src.components.Mailer.send();
-};
-src.components.View.empty = function() {
-	src.components.View._jCsv.find("a").unbind();
-	src.components.View._jScreened.add(src.components.View._jCsv).empty();
-	src.components.View._jMergeCSV.hide();
+src.components.View.empty = function(data) {
+	src.utils.Data.init(data);
+	src.components.View._jScreeningList.find("a").unbind();
+	src.components.View._jButtons.hide();
 };
 src.utils = {};
-src.utils.Csv = function() { };
-src.utils.Csv.__name__ = true;
-src.utils.Csv["export"] = function(data) {
-	src.utils.Csv.ajax(src.utils.Csv.getAdjusted(data).join("\n"));
-};
-src.utils.Csv.setCurrent = function(value) {
-	src.utils.Csv._current = value;
-};
-src.utils.Csv.merge = function() {
-	if(!src.utils.Data.hasSaved()) {
-		jp.saken.utils.Handy.alert("CSVがありません。");
-		return;
-	}
-	src.utils.Csv._current = null;
-	var data = src.utils.Data.getSaved();
-	src.utils.Csv["export"](data);
-	src.utils.Data.setScreened(data);
-	src.utils.Data.clearSaved();
-};
-src.utils.Csv.getAdjusted = function(data) {
-	var length = data.length;
-	var html = "<dt>" + length + "件ヒットしました</dt>";
-	var array = [];
-	var _g = 0;
-	while(_g < length) {
-		var i = _g++;
-		var info = data[i];
-		var id = info.id;
-		var subID = info.subID;
-		var date = info.date;
-		var corporate = info.corporate;
-		var name = info.name;
-		var mail = info.mail;
-		var staffName = info.staffName;
-		html += src.utils.Csv.getSingleHTML(corporate,name,mail);
-		array.push(id + "\t" + subID + "\t" + date + "\t" + corporate + "\t" + name + "\t" + mail + "\t" + staffName);
-	}
-	src.components.View.setScreened(html);
-	return array;
-};
-src.utils.Csv.getSingleHTML = function(corporate,name,mail) {
-	return "\n\t\t<dd>\n\t\t\t<span class=\"corporate\">" + corporate + "</span>\n\t\t\t<span class=\"name\">" + name + "様</span>\n\t\t\t<span class=\"mail\">" + mail + "</span>\n\t\t</dd>";
-};
-src.utils.Csv.ajax = function(data) {
-	var num;
-	if(src.utils.Csv._current == null) num = ""; else num = jp.saken.utils.Handy.getFilledNumber(src.utils.Csv._current);
-	src.utils.Csv._filename = "data" + num + ".csv";
-	var http = new haxe.Http("files/php/exportCSV.php");
-	http.onData = src.utils.Csv.onExported;
-	http.setParameter("data",data);
-	http.setParameter("filename",src.utils.Csv._filename);
-	http.request(true);
-};
-src.utils.Csv.onExported = function(result) {
-	var filename = "data.csv";
-	var jAnchor = new js.JQuery("<a>");
-	jAnchor.prop("download",src.utils.Csv._filename);
-	jAnchor.prop("href","files/php/csv/" + src.utils.Csv._filename);
-	jAnchor.prop("target","_blank");
-	jAnchor.addClass("download").text("→ Download " + src.utils.Csv._filename);
-	src.components.View.appendCSV(jAnchor);
-	jp.saken.utils.Handy.alert("CSVの書き出しが完了しました。");
-};
 src.utils.DB = function() { };
 src.utils.DB.__name__ = true;
 src.utils.DB.load = function(func) {
@@ -1023,8 +846,8 @@ src.utils.DB.onLoaded = function(event) {
 	src.utils.DB.ngDomains = src.utils.DB._map.get("ngDomains");
 	src.utils.DB.stopUsers = src.utils.DB._map.get("stopUsers");
 	src.utils.Message.set(src.utils.DB.messages);
-	console.log(src.utils.DB.ngDomains);
-	console.log(src.utils.DB.stopUsers);
+	console.log("NG Domain : " + src.utils.DB.ngDomains.length + "件 " + Std.string(src.utils.DB.ngDomains));
+	console.log("配信停止ユーザー : " + src.utils.DB.stopUsers.length + "件 " + Std.string(src.utils.DB.stopUsers));
 	src.utils.DB._func();
 };
 src.utils.DB.getMap = function(data,key,value) {
@@ -1043,49 +866,38 @@ src.utils.DB.getMap = function(data,key,value) {
 };
 src.utils.Data = function() { };
 src.utils.Data.__name__ = true;
-src.utils.Data.setRaw = function(array) {
+src.utils.Data.init = function(array) {
 	src.utils.Data._raw = array;
+	src.utils.Data._localScreened = src.utils.Data._webScreened = src.utils.Data._saved = [];
 };
 src.utils.Data.getRaw = function() {
 	return src.utils.Data._raw;
 };
-src.utils.Data.hasRaw = function() {
-	return src.utils.Data._raw != null;
-};
 src.utils.Data.shiftRaw = function() {
 	src.utils.Data._raw.shift();
 };
-src.utils.Data.setScreened = function(data) {
-	src.utils.Data._screened = data;
+src.utils.Data.setLocalScreened = function(data) {
+	src.utils.Data._localScreened = data;
 };
-src.utils.Data.getScreened = function() {
-	return src.utils.Data._screened;
+src.utils.Data.getLocalScreened = function() {
+	return src.utils.Data._localScreened;
 };
-src.utils.Data.pushScreened = function(value) {
-	src.utils.Data._screened.push(value);
+src.utils.Data.setWebScreened = function(data) {
+	src.utils.Data._webScreened = data;
 };
-src.utils.Data.clearScreened = function() {
-	src.utils.Data._screened = [];
+src.utils.Data.getWebScreened = function() {
+	return src.utils.Data._webScreened;
 };
-src.utils.Data.getSaved = function() {
-	return src.utils.Data._saved;
-};
-src.utils.Data.hasSaved = function() {
-	return src.utils.Data._saved != null && src.utils.Data._saved.length > 0;
-};
-src.utils.Data.concatSaved = function() {
-	src.utils.Data._saved = src.utils.Data._saved.concat(src.utils.Data._screened);
-};
-src.utils.Data.clearSaved = function() {
-	src.utils.Data._saved = [];
+src.utils.Data.pushWebScreened = function(id) {
+	src.utils.Data._webScreened.push(id);
+	console.log(src.utils.Data._webScreened);
 };
 src.utils.ER = function() { };
 src.utils.ER.__name__ = true;
-src.utils.ER.set = function(localNG,globalNG) {
+src.utils.ER.set = function(value) {
 	src.utils.ER.ngDomains = src.utils.ER.getByArray(src.utils.DB.ngDomains);
 	src.utils.ER.stopUsers = src.utils.ER.getByArray(src.utils.DB.stopUsers);
-	src.utils.ER.local = src.utils.ER.getByText(localNG);
-	src.utils.ER.global = src.utils.ER.getByText(globalNG);
+	src.utils.ER.ngWords = src.utils.ER.getByText(value);
 };
 src.utils.ER.getByArray = function(array) {
 	return new EReg(array.join("|"),"i");
@@ -1138,16 +950,15 @@ src.utils.Message.getURLReplaced = function(body,name,ampm) {
 src.utils.Test = function() { };
 src.utils.Test.__name__ = true;
 src.utils.Test.traceHeader = function(array) {
-	var string = "";
+	var strings = [];
 	var _g1 = 0;
 	var _g = array.length;
 	while(_g1 < _g) {
 		var p = _g1++;
-		string += p + ":" + array[p] + ",";
+		strings.push(p + ":" + array[p]);
 	}
-	console.log(string);
+	console.log(strings.join(","));
 };
-function $iterator(o) { if( o instanceof Array ) return function() { return HxOverrides.iter(o); }; return typeof(o.iterator) == 'function' ? $bind(o,o.iterator) : o.iterator; }
 var $_, $fid = 0;
 function $bind(o,m) { if( m == null ) return null; if( m.__id__ == null ) m.__id__ = $fid++; var f; if( o.hx__closures__ == null ) o.hx__closures__ = {}; else f = o.hx__closures__[m.__id__]; if( f == null ) { f = function(){ return f.method.apply(f.scope, arguments); }; f.scope = o; f.method = m; o.hx__closures__[m.__id__] = f; } return f; }
 if(Array.prototype.indexOf) HxOverrides.indexOf = function(a,o,i) {
@@ -1177,6 +988,5 @@ jp.saken.utils.Dom.userAgent = jp.saken.utils.Dom.window.navigator.userAgent;
 src.Main.CAMPAIGN_LIST = ["b_1"];
 src.Main.TEST_MAIL = "sakata@graphic.co.jp";
 src.components.Screener.HEAD_LENGTH = 9;
-src.utils.Csv.PHP_URL = "files/php/exportCSV.php";
 src.Main.main();
 })();

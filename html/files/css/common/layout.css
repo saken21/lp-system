@@ -1,0 +1,33 @@
+@charset "UTF-8";
+
+@import "base.css";
+
+/*-------------------------------------------------------------------------
+	All
+/*-----------------------------------------------------------------------*/
+#all {
+	padding:80px;
+}
+
+	#all textarea {
+		padding:10px;
+		border:1px solid #aaa;
+		font-size:12px;
+		text-align:justify;
+		letter-spacing:1px;
+		line-height:1.6;
+	}
+	
+	#all button {
+		padding:5px 20px;
+		border:none;
+		border-radius:3px;
+		background:#259c8f;
+		color:#fff;
+		font-size:14px;
+		cursor:pointer;
+	}
+	
+	#all button:hover {
+		background-color:#53c0b4;
+	}
