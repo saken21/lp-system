@@ -16,6 +16,8 @@ class Message {
 	========================================================================== */
 	public static function set(data:Array<Dynamic>):Void {
 		
+		return;
+		
 		_counter = 0;
 		
 		var map:Map<String,Map<String,String>> = new Map();
@@ -36,8 +38,8 @@ class Message {
 			
 		}
 		
-		normal = map[Main.CAMPAIGN_LIST[0]];
-		first  = map[Main.CAMPAIGN_LIST[1]];
+		//normal = map[Main.CAMPAIGN_LIST[0]];
+		//first  = map[Main.CAMPAIGN_LIST[1]];
 		
 	}
 	

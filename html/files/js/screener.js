@@ -135,6 +135,18 @@ StringTools.__name__ = true;
 StringTools.replace = function(s,sub,by) {
 	return s.split(sub).join(by);
 };
+var Test = function() { };
+Test.__name__ = true;
+Test.traceHeader = function(array) {
+	var strings = [];
+	var _g1 = 0;
+	var _g = array.length;
+	while(_g1 < _g) {
+		var p = _g1++;
+		strings.push(p + ":" + array[p]);
+	}
+	console.log(strings.join(","));
+};
 var haxe = {};
 haxe.Http = function(url) {
 	this.url = url;
@@ -226,16 +238,6 @@ haxe.Http.prototype = {
 	}
 };
 haxe.ds = {};
-haxe.ds.IntMap = function() {
-	this.h = { };
-};
-haxe.ds.IntMap.__name__ = true;
-haxe.ds.IntMap.__interfaces__ = [IMap];
-haxe.ds.IntMap.prototype = {
-	set: function(key,value) {
-		this.h[key] = value;
-	}
-};
 haxe.ds.StringMap = function() {
 	this.h = { };
 };
@@ -412,6 +414,17 @@ jp.saken.utils.Ajax.onBeforeunload = function(event) {
 var js = {};
 jp.saken.utils.Dom = function() { };
 jp.saken.utils.Dom.__name__ = true;
+jp.saken.utils.File = function() { };
+jp.saken.utils.File.__name__ = true;
+jp.saken.utils.File.downloadDirect = function(folder,filename) {
+	var jAnchor = new js.JQuery("<a>");
+	jAnchor.prop("download",filename);
+	jAnchor.prop("href",folder + filename);
+	jAnchor.prop("target","_blank");
+	jp.saken.utils.Dom.jBody.append(jAnchor);
+	jAnchor.get(0).click();
+	jAnchor.remove();
+};
 jp.saken.utils.Handy = function() { };
 jp.saken.utils.Handy.__name__ = true;
 jp.saken.utils.Handy.alert = function(value) {
@@ -579,7 +592,6 @@ src.Main.main = function() {
 	new js.JQuery("document").ready(src.Main.init);
 };
 src.Main.init = function(event) {
-	if("sakata@graphic.co.jp".length > 0) console.log("\n--\nTest - " + "sakata@graphic.co.jp" + "\n--\n");
 	src.utils.DB.load(src.components.View.init);
 };
 src.Main.onBeforeunload = function(event) {
@@ -609,7 +621,7 @@ src.components.Screener.startGlobal = function(data) {
 	while(_g1 < _g) {
 		var i = _g1++;
 		var info = data[i];
-		src.components.Screener.accessDomain(info.get("id"),info.get("domain"));
+		src.components.Screener.accessDomain(info);
 	}
 };
 src.components.Screener.getLocalScreenedData = function() {
@@ -640,6 +652,10 @@ src.components.Screener.getInfo = function(array) {
 	if(src.components.Screener.isBadID(id,Std.parseInt(subID),corporate,mail,domain)) return null;
 	var _g = new haxe.ds.StringMap();
 	_g.set("id",id);
+	_g.set("subID",subID);
+	_g.set("corporate",corporate);
+	_g.set("name",name);
+	_g.set("mail",mail);
 	_g.set("domain",domain);
 	return _g;
 };
@@ -676,7 +692,7 @@ src.components.Screener.isBadID = function(id,subID,corporate,mail,domain) {
 		if(c == null || d == null) return true;
 		if(corporate.indexOf(c) < 0 || mail.indexOf(d) < 0) return true;
 		if(HxOverrides.indexOf(m,mail,0) > -1) return true;
-		src.components.Screener._mains.get(id).m.push(mail);
+		m.push(mail);
 	} else {
 		var v = { c : corporate, d : domain, m : [mail]};
 		src.components.Screener._mains.set(id,v);
@@ -692,13 +708,13 @@ src.components.Screener.getReplaced = function(value) {
 	value = StringTools.replace(value,"&#8226;","・");
 	return value;
 };
-src.components.Screener.accessDomain = function(id,domain) {
-	$.ajax({ type : "GET", url : "http://" + domain}).done(function(data) {
-		src.components.Screener.analyzeKeyword(data.results[0],id);
+src.components.Screener.accessDomain = function(info) {
+	$.ajax({ type : "GET", url : "http://" + info.get("domain")}).done(function(data) {
+		src.components.Screener.analyzeKeyword(data.results[0],info);
 		src.components.Screener.removeCounter();
 	}).fail(src.components.Screener.removeCounter);
 };
-src.components.Screener.analyzeKeyword = function(value,id) {
+src.components.Screener.analyzeKeyword = function(value,info) {
 	if(value == null) return;
 	var jHead = new js.JQuery("<div>" + value.split("<body")[0] + "</div>");
 	var jKeywords = jHead.find("meta[name*=\"eyword\"]");
@@ -707,12 +723,13 @@ src.components.Screener.analyzeKeyword = function(value,id) {
 	if(jDescription.length == 0) jDescription = jHead.find("meta[name=\"DESCRIPTION\"]");
 	var keywords = jKeywords.prop("content") + jDescription.prop("content");
 	console.log("Keyword : " + keywords);
-	if(!src.utils.ER.ngWords.match(keywords)) src.utils.Data.pushWebScreened(id);
+	if(!src.utils.ER.ngWords.match(keywords)) src.utils.Data.pushWebScreened(info);
 };
 src.components.Screener.removeCounter = function() {
 	src.components.Screener._counter--;
 	if(src.components.Screener._counter == 0) {
 		src.components.Screener._isBusy = false;
+		jp.saken.utils.Handy.alert("スクリーニングが完了しました（" + src.utils.Data.getWebScreened().length + "件）。");
 		src.components.View.showSaveButton();
 	}
 	console.log(src.components.Screener._counter);
@@ -724,10 +741,13 @@ src.components.View.init = function() {
 	var jForm = jAll.find("#form");
 	src.components.View._jFilename = jAll.find("#filename");
 	src.components.View._jNgWord = jForm.find("#ng-word");
-	src.components.View._jScreeningLength = jForm.find("#screening-length");
-	src.components.View._jScreeningList = jAll.find("#screening-list");
+	src.components.View._jScreeningLength = jForm.find("#screening-length").trigger("focus");
 	src.components.View._jButtons = jForm.find("button").on("click",src.components.View.onClick);
+	src.components.View._jScreeningList = jAll.find("#screening-list");
 	src.components.View._dragAndDrop = new jp.saken.ui.DragAndDrop(jp.saken.utils.Dom.jWindow,src.components.View.onDropped);
+};
+src.components.View.setScreened = function(html) {
+	src.components.View._jScreeningList.html(html);
 };
 src.components.View.showSaveButton = function() {
 	src.components.View.showButton("save");
@@ -736,7 +756,7 @@ src.components.View.onDropped = function(data) {
 	src.components.View._jFilename.text(src.components.View._dragAndDrop.getFilename());
 	var array = data.split("\n");
 	src.components.View.empty(array);
-	src.utils.Test.traceHeader(array[0].split("\t"));
+	Test.traceHeader(array[0].split("\t"));
 	console.log("All : " + array.length);
 	src.utils.ER.set(src.components.View._jNgWord.prop("value"));
 	src.components.Screener.ready();
@@ -749,7 +769,36 @@ src.components.View.onClick = function(event) {
 	case "start":
 		src.components.Screener.start();
 		break;
+	case "save":
+		src.components.View.save();
+		break;
 	}
+};
+src.components.View.save = function() {
+	var data = src.utils.Data.getWebScreened();
+	var length = data.length;
+	var _g = 0;
+	while(_g < length) {
+		var i = _g++;
+		var info = data[i];
+		var v = src.components.View.getStaff(info.get("id"));
+		info.set("staff",v);
+		v;
+	}
+	console.log("Screened List : " + length);
+	src.utils.Csv["export"](data);
+};
+src.components.View.getStaff = function(clientID) {
+	var staff;
+	var staffID = src.utils.DB.supports.get(clientID);
+	if(staffID == null) {
+		staff = jp.saken.utils.Handy.shuffleArray(src.utils.DB.staffs)[0];
+		staffID = staff.id;
+		src.utils.DB.supports.set(clientID,staffID);
+		staffID;
+		src.utils.DB.insertSupport(clientID,staffID);
+	} else staff = src.utils.DB.staffMap.get(staffID);
+	return staff.lastname;
 };
 src.components.View.setSliced = function(length) {
 	if(length < 1) {
@@ -783,6 +832,38 @@ src.components.View.empty = function(data) {
 	src.components.View._jButtons.hide();
 };
 src.utils = {};
+src.utils.Csv = function() { };
+src.utils.Csv.__name__ = true;
+src.utils.Csv["export"] = function(data) {
+	src.utils.Csv.ajax(src.utils.Csv.getAdjusted(data).join("\n"));
+};
+src.utils.Csv.getAdjusted = function(data) {
+	var array = [];
+	var _g1 = 0;
+	var _g = data.length;
+	while(_g1 < _g) {
+		var i = _g1++;
+		var info = data[i];
+		var id = info.get("id");
+		var subID = info.get("subID");
+		var corporate = info.get("corporate");
+		var name = info.get("name");
+		var mail = info.get("mail");
+		var staff = info.get("staff");
+		array.push(id + "\t" + subID + "\t" + corporate + "\t" + name + "\t" + mail + "\t" + staff);
+	}
+	return array;
+};
+src.utils.Csv.ajax = function(data) {
+	var http = new haxe.Http("files/php/exportCSV.php");
+	http.onData = src.utils.Csv.onExported;
+	http.setParameter("data",data);
+	http.setParameter("filename","data.csv");
+	http.request(true);
+};
+src.utils.Csv.onExported = function(result) {
+	jp.saken.utils.File.downloadDirect("files/php/csv/","data.csv");
+};
 src.utils.DB = function() { };
 src.utils.DB.__name__ = true;
 src.utils.DB.load = function(func) {
@@ -790,10 +871,8 @@ src.utils.DB.load = function(func) {
 	src.utils.DB._map = new haxe.ds.StringMap();
 	src.utils.DB._counter = 0;
 	jp.saken.utils.Dom.jWindow.on("loadDB",src.utils.DB.onLoaded);
-	src.utils.DB.ajax("messages",["name","subject","header","body","footer"],src.utils.DB.getWhere(src.Main.CAMPAIGN_LIST));
 	src.utils.DB.ajax("staffs",["id","lastname","firstname","mailaddress"]);
 	src.utils.DB.ajax("supports",["client_id","staff_id"]);
-	src.utils.DB.ajax("pages",["id","url"]);
 	src.utils.DB.ajax("ngDomains",["domain"]);
 	src.utils.DB.ajax("stopUsers",["mailaddress"]);
 };
@@ -838,20 +917,17 @@ src.utils.DB.getSimpleArray = function(data,key) {
 src.utils.DB.onLoaded = function(event) {
 	src.utils.DB._counter--;
 	if(src.utils.DB._counter > 0) return;
-	src.utils.DB.messages = src.utils.DB._map.get("messages");
 	src.utils.DB.staffs = src.utils.DB._map.get("staffs");
 	src.utils.DB.staffMap = src.utils.DB.getMap(src.utils.DB.staffs,"id");
 	src.utils.DB.supports = src.utils.DB.getMap(src.utils.DB._map.get("supports"),"client_id","staff_id");
-	src.utils.DB.pages = src.utils.DB._map.get("pages");
 	src.utils.DB.ngDomains = src.utils.DB._map.get("ngDomains");
 	src.utils.DB.stopUsers = src.utils.DB._map.get("stopUsers");
-	src.utils.Message.set(src.utils.DB.messages);
 	console.log("NG Domain : " + src.utils.DB.ngDomains.length + "件 " + Std.string(src.utils.DB.ngDomains));
 	console.log("配信停止ユーザー : " + src.utils.DB.stopUsers.length + "件 " + Std.string(src.utils.DB.stopUsers));
 	src.utils.DB._func();
 };
 src.utils.DB.getMap = function(data,key,value) {
-	var map = new haxe.ds.IntMap();
+	var map = new haxe.ds.StringMap();
 	var _g1 = 0;
 	var _g = data.length;
 	while(_g1 < _g) {
@@ -868,7 +944,7 @@ src.utils.Data = function() { };
 src.utils.Data.__name__ = true;
 src.utils.Data.init = function(array) {
 	src.utils.Data._raw = array;
-	src.utils.Data._localScreened = src.utils.Data._webScreened = src.utils.Data._saved = [];
+	src.utils.Data._localScreened = src.utils.Data._webScreened = [];
 };
 src.utils.Data.getRaw = function() {
 	return src.utils.Data._raw;
@@ -888,9 +964,8 @@ src.utils.Data.setWebScreened = function(data) {
 src.utils.Data.getWebScreened = function() {
 	return src.utils.Data._webScreened;
 };
-src.utils.Data.pushWebScreened = function(id) {
-	src.utils.Data._webScreened.push(id);
-	console.log(src.utils.Data._webScreened);
+src.utils.Data.pushWebScreened = function(info) {
+	src.utils.Data._webScreened.push(info);
 };
 src.utils.ER = function() { };
 src.utils.ER.__name__ = true;
@@ -906,58 +981,6 @@ src.utils.ER.getByText = function(value) {
 	if(value.length == 0) return null;
 	value = new EReg("\n","g").replace(value,"");
 	return new EReg(new EReg(",","g").replace(value,"|"),"i");
-};
-src.utils.Message = function() { };
-src.utils.Message.__name__ = true;
-src.utils.Message.set = function(data) {
-	src.utils.Message._counter = 0;
-	var map = new haxe.ds.StringMap();
-	var ampm;
-	if(new Date().getHours() > 12) ampm = "pm"; else ampm = "am";
-	var _g1 = 0;
-	var _g = data.length;
-	while(_g1 < _g) {
-		var i = _g1++;
-		var info = data[i];
-		var name = info.name;
-		var body = Std.string(info.header) + "\n\n" + Std.string(info.body) + "\n\n" + Std.string(info.footer);
-		var v;
-		var _g2 = new haxe.ds.StringMap();
-		_g2.set("subject",info.subject);
-		_g2.set("body",src.utils.Message.getURLReplaced(body,name,ampm));
-		v = _g2;
-		map.set(name,v);
-		v;
-	}
-	src.utils.Message.normal = map.get(src.Main.CAMPAIGN_LIST[0]);
-	src.utils.Message.first = map.get(src.Main.CAMPAIGN_LIST[1]);
-};
-src.utils.Message.getURLReplaced = function(body,name,ampm) {
-	var _g1 = 0;
-	var _g = src.utils.DB.pages.length;
-	while(_g1 < _g) {
-		var i = _g1++;
-		var info = src.utils.DB.pages[i];
-		var id = info.id;
-		var param1 = "?utm_source=" + name + "&utm_content=" + id;
-		var param2 = "&utm_medium=mail_" + ampm + "&utm_campaign=lp";
-		var eReg = new EReg("##" + id,"");
-		var counter = 1;
-		while(eReg.match(body)) body = eReg.replace(body,Std.string(info.url) + param1 + counter++ + "_##6_##7" + param2);
-	}
-	return body;
-};
-src.utils.Test = function() { };
-src.utils.Test.__name__ = true;
-src.utils.Test.traceHeader = function(array) {
-	var strings = [];
-	var _g1 = 0;
-	var _g = array.length;
-	while(_g1 < _g) {
-		var p = _g1++;
-		strings.push(p + ":" + array[p]);
-	}
-	console.log(strings.join(","));
 };
 var $_, $fid = 0;
 function $bind(o,m) { if( m == null ) return null; if( m.__id__ == null ) m.__id__ = $fid++; var f; if( o.hx__closures__ == null ) o.hx__closures__ = {}; else f = o.hx__closures__[m.__id__]; if( f == null ) { f = function(){ return f.method.apply(f.scope, arguments); }; f.scope = o; f.method = m; o.hx__closures__[m.__id__] = f; } return f; }
@@ -985,8 +1008,8 @@ jp.saken.utils.Dom.jWindow = new js.JQuery(jp.saken.utils.Dom.window);
 jp.saken.utils.Dom.body = jp.saken.utils.Dom.document.body;
 jp.saken.utils.Dom.jBody = new js.JQuery(jp.saken.utils.Dom.body);
 jp.saken.utils.Dom.userAgent = jp.saken.utils.Dom.window.navigator.userAgent;
-src.Main.CAMPAIGN_LIST = ["b_1"];
-src.Main.TEST_MAIL = "sakata@graphic.co.jp";
 src.components.Screener.HEAD_LENGTH = 9;
+src.utils.Csv.PHP_URL = "files/php/exportCSV.php";
+src.utils.Csv.FILE_NAME = "data.csv";
 src.Main.main();
 })();

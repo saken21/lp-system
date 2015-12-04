@@ -4,8 +4,7 @@ class Data {
 	
 	private static var _raw          :Array<String>;
 	private static var _localScreened:Array<Dynamic>;
-	private static var _webScreened  :Array<String>;
-	private static var _saved        :Array<String>;
+	private static var _webScreened  :Array<Map<String,String>>;
 	
 	/* =======================================================================
 	Public - Init
@@ -13,7 +12,7 @@ class Data {
 	public static function init(array:Array<String>):Void {
 		
 		_raw = array;
-		_localScreened = _webScreened = _saved = [];
+		_localScreened = _webScreened = [];
 		
 	}
 	
@@ -56,7 +55,7 @@ class Data {
 	/* =======================================================================
 	Public - Set Web Screened
 	========================================================================== */
-	public static function setWebScreened(data:Array<String>):Void {
+	public static function setWebScreened(data:Array<Map<String,String>>):Void {
 		
 		_webScreened = data;
 		
@@ -65,7 +64,7 @@ class Data {
 	/* =======================================================================
 	Public - Get Web Screened
 	========================================================================== */
-	public static function getWebScreened():Array<String> {
+	public static function getWebScreened():Array<Map<String,String>> {
 		
 		return _webScreened;
 		
@@ -74,10 +73,9 @@ class Data {
 	/* =======================================================================
 	Public - Push Web Screened
 	========================================================================== */
-	public static function pushWebScreened(id:String):Void {
+	public static function pushWebScreened(info:Map<String,String>):Void {
 		
-		_webScreened.push(id);
-		trace(_webScreened);
+		_webScreened.push(info);
 		
 	}
 	

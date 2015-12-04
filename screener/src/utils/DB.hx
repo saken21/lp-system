@@ -1,16 +1,15 @@
 package src.utils;
 
 import js.JQuery;
+import jp.saken.utils.Handy;
 import jp.saken.utils.Dom;
 import jp.saken.utils.Ajax;
 
 class DB {
 	
-	public static var messages (default,null):Array<Dynamic>;
 	public static var staffs   (default,null):Array<Dynamic>;
-	public static var staffMap (default,null):Map<Int,Dynamic>;
-	public static var supports (default,null):Map<Int,Dynamic>;
-	public static var pages    (default,null):Array<Dynamic>;
+	public static var staffMap (default,null):Map<String,Dynamic>;
+	public static var supports (default,null):Map<String,Dynamic>;
 	public static var ngDomains(default,null):Array<String>;
 	public static var stopUsers(default,null):Array<String>;
 	
@@ -29,10 +28,8 @@ class DB {
 		
 		Dom.jWindow.on('loadDB',onLoaded);
 		
-		ajax('messages',['name','subject','header','body','footer'],getWhere(Main.CAMPAIGN_LIST));
 		ajax('staffs',['id','lastname','firstname','mailaddress']);
 		ajax('supports',['client_id','staff_id']);
-		ajax('pages',['id','url']);
 		ajax('ngDomains',['domain']);
 		ajax('stopUsers',['mailaddress']);
 		
@@ -41,7 +38,7 @@ class DB {
 		/* =======================================================================
 		Public - Insert Support
 		========================================================================== */
-		public static function insertSupport(clientID:Int,staffID:Int):Void {
+		public static function insertSupport(clientID:String,staffID:String):Void {
 			
 			Ajax.insertData('supports',['client_id','staff_id'],[clientID,staffID]);
 
@@ -103,15 +100,11 @@ class DB {
 		_counter--;
 		if (_counter > 0) return;
 		
-		messages  = _map['messages'];
 		staffs    = _map['staffs'];
 		staffMap  = getMap(staffs,'id');
 		supports  = getMap(_map['supports'],'client_id','staff_id');
-		pages     = _map['pages'];
 		ngDomains = _map['ngDomains'];
 		stopUsers = _map['stopUsers'];
-		
-		Message.set(messages);
 		
 		trace('NG Domain : ' + ngDomains.length + '件 ' + ngDomains);
 		trace('配信停止ユーザー : ' + stopUsers.length + '件 ' + stopUsers);
@@ -123,9 +116,9 @@ class DB {
 	/* =======================================================================
 	Get Map
 	========================================================================== */
-	private static function getMap(data:Array<Dynamic>,key:String,value:String = null):Map<Int,Dynamic> {
+	private static function getMap(data:Array<Dynamic>,key:String,value:String = null):Map<String,Dynamic> {
 		
-		var map:Map<Int,Dynamic> = new Map();
+		var map:Map<String,Dynamic> = new Map();
 		
 		for (i in 0...data.length) {
 			

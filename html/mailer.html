@@ -1,0 +1,41 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ja" lang="ja">
+
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta http-equiv="Content-Script-Type" content="text/javascript" />
+<title>LP Mailer</title>
+
+<link href="files/css/mailer.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body id="index">
+
+<div id="all">
+
+	<header id="header">
+    	<p>UTF-8リストをドロップしてください。</p>
+    	<p>ファイル名：<span id="filename"></span></p>
+    </header>
+
+	<form id="form">
+    	<ul>
+            <li><input type="text" placeholder="メッセージ名" id="message-name"></li>
+            <li><input type="checkbox" id="is-need-first"><label for="is-need-first">注文有無区別あり</label></li>
+        </ul>
+        <p><input type="text" placeholder="テストメール" id="test-mailaddress"></p>
+        <p><button type="button" class="sendmail">メール送信</button></p>
+    </form>
+    
+    <div id="list"></div>
+
+</div>
+
+
+<script src="files/js/jquery.js"></script>
+<script src="files/js/mailer.js"></script>
+
+</body>
+</html>

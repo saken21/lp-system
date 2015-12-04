@@ -8,11 +8,9 @@ class DB {
 	
 	public static var messages (default,null):Array<Dynamic>;
 	public static var staffs   (default,null):Array<Dynamic>;
-	public static var staffMap (default,null):Map<Int,Dynamic>;
-	public static var supports (default,null):Map<Int,Dynamic>;
+	public static var staffMap (default,null):Map<String,Dynamic>;
+	public static var supports (default,null):Map<String,Dynamic>;
 	public static var pages    (default,null):Array<Dynamic>;
-	public static var ngDomains(default,null):Array<String>;
-	public static var stopUsers(default,null):Array<String>;
 	
 	private static var _func   :Void->Void;
 	private static var _map    :Map<String,Dynamic>;
@@ -29,22 +27,25 @@ class DB {
 		
 		Dom.jWindow.on('loadDB',onLoaded);
 		
-		ajax('messages',['name','subject','header','body','footer'],getWhere(Main.CAMPAIGN_LIST));
+		//ajax('messages',['name','subject','header','body','footer'],getWhere(Main.CAMPAIGN_LIST));
 		ajax('staffs',['id','lastname','firstname','mailaddress']);
 		ajax('supports',['client_id','staff_id']);
 		ajax('pages',['id','url']);
-		ajax('ngDomains',['domain']);
-		ajax('stopUsers',['mailaddress']);
 		
 	}
 	
 		/* =======================================================================
-		Public - Insert Support
+		Public - Load List
 		========================================================================== */
-		public static function insertSupport(clientID:Int,staffID:Int):Void {
-			
-			Ajax.insertData('supports',['client_id','staff_id'],[clientID,staffID]);
+		public static function loadScreenedList(name:String,func:Void->Void):Void {
 
+			Ajax.getData('screenedLists',['client_id_list'],function(data:Array<Dynamic>):Void {
+
+				var array:Array<String> = data[0].client_id_list.split(',');
+				trace('対象件数 : ' + array.length);
+
+			},'name = "' + name + '"');
+			
 		}
 	
 	/* =======================================================================
@@ -108,13 +109,8 @@ class DB {
 		staffMap  = getMap(staffs,'id');
 		supports  = getMap(_map['supports'],'client_id','staff_id');
 		pages     = _map['pages'];
-		ngDomains = _map['ngDomains'];
-		stopUsers = _map['stopUsers'];
 		
 		Message.set(messages);
-		
-		trace(ngDomains);
-		trace(stopUsers);
 		
 		_func();
 		
@@ -123,9 +119,9 @@ class DB {
 	/* =======================================================================
 	Get Map
 	========================================================================== */
-	private static function getMap(data:Array<Dynamic>,key:String,value:String = null):Map<Int,Dynamic> {
+	private static function getMap(data:Array<Dynamic>,key:String,value:String = null):Map<String,Dynamic> {
 		
-		var map:Map<Int,Dynamic> = new Map();
+		var map:Map<String,Dynamic> = new Map();
 		
 		for (i in 0...data.length) {
 			

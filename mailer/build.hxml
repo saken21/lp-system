@@ -1,5 +1,6 @@
--cp src
 -main src.Main
--js ../html/files/js/screener.js
+-js ../html/files/js/mailer.js
 -lib createjs
+-cp src
 -cp ../../../../haxe/
+-cp ../library/

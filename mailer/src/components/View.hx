@@ -4,165 +4,104 @@ import js.JQuery;
 import jp.saken.utils.Handy;
 import jp.saken.utils.Dom;
 import jp.saken.ui.DragAndDrop;
-import src.utils.Data;
-import src.utils.Csv;
-import src.utils.ER;
-import src.utils.Test;
+import src.utils.DB;
+import Test;
 
 class View {
 	
-	private static var _jAll        :JQuery;
-	private static var _jSubmit     :JQuery;
-	private static var _jLocalNG    :JQuery;
-	private static var _jGlobalNG   :JQuery;
-	private static var _jSliceLength:JQuery;
-	private static var _jCsv        :JQuery;
-	private static var _jScreened   :JQuery;
-	private static var _jMergeCSV   :JQuery;
-	private static var _jSendMail   :JQuery;
+	private static var _jFilename  :JQuery;
+	private static var _jListName  :JQuery;
+	private static var _jSteps     :JQuery;
+	private static var _jButtons   :JQuery;
+	private static var _jList      :JQuery;
+	private static var _dragAndDrop:DragAndDrop;
 	
 	/* =======================================================================
 	Public - Init
 	========================================================================== */
 	public static function init():Void {
 		
-		_jAll         = new JQuery('#all').show();
-		_jSubmit      = new JQuery('#submit');
-		_jLocalNG     = new JQuery('#localNG');
-		_jGlobalNG    = new JQuery('#globalNG');
-		_jSliceLength = new JQuery('#sliceLength');
-		_jCsv         = new JQuery('#csv');
-		_jScreened    = new JQuery('#screened');
-		_jMergeCSV    = new JQuery('#mergeCSV');
-		_jSendMail    = new JQuery('#sendMail');
+		var jAll :JQuery = new JQuery('#all').show();
+		var jForm:JQuery = jAll.find('#form');
 		
-		var jFilename = new JQuery('#filename');
-		var dragAndDrop:DragAndDrop = new DragAndDrop(Dom.jWindow,onLoadedFile);
+		_jFilename = jAll.find('#filename');
+		_jSteps    = jForm.find('.step');
+		_jListName = jForm.find('#list-name');
+		_jButtons  = jForm.find('button').on('click',onClick);
+		_jList     = jAll.find('#list');
 		
-		Dom.jWindow.on('onDrop',function(event:JqEvent):Void {
-			
-			empty();
-			jFilename.text(dragAndDrop.getFilename());
-		
-		});
-		
-		_jMergeCSV.on('click',function(event:JqEvent):Void { Csv.merge(); });
-		_jSubmit.on('click',submit);
-		_jSendMail.on('click',sendMail);
+		_dragAndDrop = new DragAndDrop(Dom.jWindow,onDropped);
 		
 	}
 	
-		/* =======================================================================
-		Public - Set Screened
-		========================================================================== */
-		public static function setScreened(html:String):Void {
-			
-			_jScreened.html(html);
-			
-		}
-		
-		/* =======================================================================
-		Public - Append CSV
-		========================================================================== */
-		public static function appendCSV(jAnchor:JQuery):Void {
-			
-			_jCsv.append(jAnchor);
-			_jSubmit.removeClass('screening');
-			
-			if (_jCsv.find('a').length > 1) _jMergeCSV.show();
-			
-		}
-		
-		/* =======================================================================
-		Public - Set Sliced CSV
-		========================================================================== */
-		public static function setSlicedCSV(data:Array<Dynamic>):Void {
-			
-			var html:String = '';
-
-			for (p in 0...data.length) {
-				html += '<a class="slicedData" data-id="' + p + '">No.' + Handy.getFilledNumber(p) + ' (' + data[p].length + ')</a>';
-			}
-			
-			_jCsv.html(html + '<p class="empty"></p>').find('a').on('click',function(event:JqEvent):Void {
-
-				if (Screener.getBusy()) {
-
-					Handy.alert('処理中です。しばらくお待ちください。');
-					return;
-
-				}
-
-				var id:Int = JQuery.cur.data('id');
-
-				Csv.setCurrent(id);
-				Screener.startGlobal(data[id]);
-
-			});
-			
-		}
-		
-		/* =======================================================================
-		Public - Get Slice Length
-		========================================================================== */
-		public static function getSliceLength():Int {
-			
-			return Std.parseInt(_jSliceLength.prop('value'));
-			
-		}
-	
 	/* =======================================================================
-	On Loaded File
+	On Dropped
 	========================================================================== */
-	private static function onLoadedFile(data:String):Void {
+	private static function onDropped(data:String):Void {
+		
+		_jFilename.text(_dragAndDrop.getFilename());
 		
 		var array:Array<String> = data.split('\n');
-		
-		empty();
-		Data.setRaw(array);
 		
 		Test.traceHeader(array[0].split('\t'));
 		trace('All : ' + array.length);
 		
+		showParts('getlist');
+		
 	}
 	
 	/* =======================================================================
-	Submit
+	On Click
 	========================================================================== */
-	private static function submit(event:JqEvent):Void {
+	private static function onClick(event:JqEvent):Void {
 		
-		if (_jSubmit.hasClass('screening') || !Data.hasRaw()) return untyped false;
+		var jTarget:JQuery = new JQuery(event.target);
 		
-		empty();
+		switch (jTarget.prop('class')) {
+			
+			case 'getlist'  : setScreenedList();
+			case 'sendmail' : sendMail();
+			
+		}
 		
-		_jSubmit.addClass('screening');
-		Data.shiftRaw();
+	}
+	
+	/* =======================================================================
+	Set Screened List
+	========================================================================== */
+	private static function setScreenedList():Void {
 		
-		ER.set(_jLocalNG.prop('value'),_jGlobalNG.prop('value'));
-		Screener.start();
+		var name:String = _jListName.prop('value');
 		
-		return untyped false;
+		if (name.length < 1) {
+			
+			Handy.alert('対象リスト名を入力してください。');
+			return;
+			
+		}
+		
+		DB.loadScreenedList(name,function():Void {
+			
+			
+		});
 		
 	}
 	
 	/* =======================================================================
 	Send Mail
 	========================================================================== */
-	private static function sendMail(event:JqEvent):Void {
+	private static function sendMail():Void {
 		
-		var isOK:Bool = Dom.window.confirm('メールを送信します。\nよろしいですか？');
-		if (isOK) Mailer.send();
+		
 		
 	}
 	
 	/* =======================================================================
-	Empty
+	Show Parts
 	========================================================================== */
-	private static function empty():Void {
+	private static function showParts(key:String):Void {
 		
-		_jCsv.find('a').unbind();
-		_jScreened.add(_jCsv).empty();
-		_jMergeCSV.hide();
+		_jSteps.filter('.' + key).show();
 		
 	}
 	

@@ -6,8 +6,22 @@
 	All
 /*-----------------------------------------------------------------------*/
 #all {
+	display:none;
 	padding:80px;
 }
+
+	#all input {
+		width:200px;
+		padding:6px;
+		border:1px solid #aaa;
+		line-height:1.2;
+	}
+	
+	#all input[type="checkbox"] {
+		width:auto;
+		margin:0 5px;
+		padding:0;
+	}
 
 	#all textarea {
 		padding:10px;
@@ -30,4 +44,15 @@
 	
 	#all button:hover {
 		background-color:#53c0b4;
+	}
+	
+/*-------------------------------------------------------------------------
+	Header
+/*-----------------------------------------------------------------------*/
+#header {
+	margin-bottom:30px;
+}
+
+	#filename {
+		height:20px;
 	}

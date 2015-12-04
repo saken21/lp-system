@@ -61,7 +61,7 @@ class Screener {
 			for (i in 0...data.length) {
 				
 				var info:Map<String,String> = data[i];
-				accessDomain(info['id'],info['domain']);
+				accessDomain(info);
 				
 			}
 
@@ -116,7 +116,7 @@ class Screener {
 			return null;
 		}
 		
-		return ['id'=>id, 'domain'=>domain];
+		return ['id'=>id, 'subID'=>subID, 'corporate'=>corporate, 'name'=>name, 'mail'=>mail, 'domain'=>domain];
 		
 	}
 	
@@ -192,7 +192,7 @@ class Screener {
 			if (corporate.indexOf(c) < 0 || mail.indexOf(d) < 0) return true;
 			if (m.indexOf(mail) > -1) return true;
 			
-			_mains[id].m.push(mail);
+			m.push(mail);
 			
 		} else {
 			
@@ -222,16 +222,16 @@ class Screener {
 	/* =======================================================================
 	Access Domain
 	========================================================================== */
-	private static function accessDomain(id:String,domain:String):Void {
+	private static function accessDomain(info:Map<String,String>):Void {
 
 		untyped $.ajax({
 			
 			type : 'GET',
-			url  : 'http://' + domain
+			url  : 'http://' + info['domain']
 			
 		}).done(function(data:Dynamic):Void {
 			
-			analyzeKeyword(data.results[0],id);
+			analyzeKeyword(data.results[0],info);
 			removeCounter();
 			
 		}).fail(removeCounter);
@@ -241,7 +241,7 @@ class Screener {
 	/* =======================================================================
 	Analyze Keyword
 	========================================================================== */
-	private static function analyzeKeyword(value:String,id:String):Void {
+	private static function analyzeKeyword(value:String,info:Map<String,String>):Void {
 
 		if (value == null) return;
 
@@ -256,7 +256,7 @@ class Screener {
 		
 		trace('Keyword : ' + keywords);
 
-		if (!ER.ngWords.match(keywords)) Data.pushWebScreened(id);
+		if (!ER.ngWords.match(keywords)) Data.pushWebScreened(info);
 		
 	}
 	
@@ -270,6 +270,8 @@ class Screener {
 		if (_counter == 0) {
 			
 			_isBusy = false;
+			
+			Handy.alert('スクリーニングが完了しました（' + Data.getWebScreened().length + '件）。');
 			View.showSaveButton();
 			
 		}

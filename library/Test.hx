@@ -1,4 +1,4 @@
-package src.utils;
+package;
 
 class Test {
 	
@@ -7,13 +7,13 @@ class Test {
 	========================================================================== */
 	public static function traceHeader(array:Array<String>):Void {
 		
-		var string:String = '';
+		var strings:Array<String> = [];
 		
 		for (p in 0...array.length) {
-			string += p + ':' + array[p] + ',';
+			strings.push(p + ':' + array[p]);
 		}
 		
-		trace(string);
+		trace(strings.join(','));
 		
 	}
 	

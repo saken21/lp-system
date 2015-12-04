@@ -5,7 +5,7 @@
 
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 <meta http-equiv="Content-Script-Type" content="text/javascript" />
-<title>LP Mail Screener</title>
+<title>LP Screener</title>
 
 <link href="files/css/screener.css" rel="stylesheet" type="text/css" />
 
@@ -16,19 +16,20 @@
 <div id="all">
 
 	<header id="header">
+    	<p>UTF-8リストをドロップしてください。</p>
     	<p>ファイル名：<span id="filename"></span></p>
     </header>
 
 	<form id="form">
     	<p><textarea placeholder="NGワードを「,」区切りで入力" id="ng-word">有限,（有）,(有),㈲,印刷,プリント,プリンティング,デザイン,クリエイティブ,クリエイト,広告,アド,企画,宣,ピーアール,プラン,事務所,エージェンシー,グラフィック,紙,プロデュース,美術,アート,ブレーン,ブレイン,サクセス,マルチ,コピー,製版,エスピー,シーリング,シール,オフセット,購買,キンコーズ,リスマ,エムビーイー,合同,名刺,チラシ,フライヤー,パンフ,冊子,カタログ,販促,オンデマンド,はがき,dm,print,design,creat,plan,agency,graphic,paper,produce,art,brain,success,multi,copy,ceiling,seal,offset,kinkos,lithmatic,mbe,ｄｍ,ｐｒｉｎｔ,ｄｅｓｉｇｎｃｒｅａｔ,ｐｌａｎ,ａｇｅｎｃｙ,ｇｒａｐｈｉｃ,ｐａｐｅｒ,ｐｒｏｄｕｃｅ,ａｒｔ,ｂｒａｉｎ,ｓｕｃｃｅｓｓ,ｍｕｌｔｉ,ｃｏｐｙ,ｃｅｉｌｉｎｇ,ｓｅａｌ,ｏｆｆｓｅｔ,ｋｉｎｋｏｓ,ｌｉｔｈｍａｔｉｃ,ｍｂｅ,ＤＭ,ＰＲＩＮＴ,ＤＥＳＩＧＮ,ＣＲＥＡＴ,ＰＬＡＮ,ＡＧＥＮＣＹ,ＧＲＡＰＨＩＣ,ＰＡＰＥＲ,ＰＲＯＤＵＣＥ,ＡＲＴ,ＢＲＡＩＮ,ＳＵＣＣＥＳＳ,ＭＵＬＴＩ,ＣＯＰＹ,ＣＥＩＬＩＮＧ,ＳＥＡＬ,ＯＦＦＳＥＴ,ＫＩＮＫＯＳ,ＬＩＴＨＭＡＴＩＣ,ＭＢＥ</textarea></p>
-        <p><input type="number" min="0" step="100" value="0" id="screening-length" /> / 1Screening</p>
+        <p><input type="number" min="0" step="100" value="0" id="screening-length"> / 1Screening</p>
         <ol>
         	<li><button type="button" class="start">スクリーニング実行</button></li>
-            <li><button type="button" class="save">保存</button></li>
+            <li><button type="button" class="save">CSV書き出し</button></li>
         </ol>
     </form>
     
-    <div id="screening-list"></div>
+    <dl id="screening-list"></dl>
 
 </div>
 

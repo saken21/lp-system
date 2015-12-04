@@ -4,17 +4,19 @@ import js.JQuery;
 import jp.saken.utils.Handy;
 import jp.saken.utils.Dom;
 import jp.saken.ui.DragAndDrop;
+import src.utils.DB;
 import src.utils.Data;
 import src.utils.ER;
-import src.utils.Test;
+import src.utils.Csv;
+import Test;
 
 class View {
 	
 	private static var _jFilename       :JQuery;
 	private static var _jNgWord         :JQuery;
 	private static var _jScreeningLength:JQuery;
-	private static var _jScreeningList  :JQuery;
 	private static var _jButtons        :JQuery;
+	private static var _jScreeningList  :JQuery;
 	private static var _dragAndDrop     :DragAndDrop;
 	
 	/* =======================================================================
@@ -27,13 +29,22 @@ class View {
 		
 		_jFilename        = jAll.find('#filename');
 		_jNgWord          = jForm.find('#ng-word');
-		_jScreeningLength = jForm.find('#screening-length');
-		_jScreeningList   = jAll.find('#screening-list');
+		_jScreeningLength = jForm.find('#screening-length').trigger('focus');
 		_jButtons         = jForm.find('button').on('click',onClick);
+		_jScreeningList   = jAll.find('#screening-list');
 		
 		_dragAndDrop = new DragAndDrop(Dom.jWindow,onDropped);
 		
 	}
+	
+		/* =======================================================================
+		Public - Set Screened
+		========================================================================== */
+		public static function setScreened(html:String):Void {
+			
+			_jScreeningList.html(html);
+			
+		}
 		
 		/* =======================================================================
 		Public - Show Save Button
@@ -74,8 +85,55 @@ class View {
 		switch (jTarget.prop('class')) {
 			
 			case 'start' : Screener.start();
+			case 'save'  : save();
 			
 		}
+		
+	}
+	
+	/* =======================================================================
+	Save
+	========================================================================== */
+	private static function save():Void {
+		
+		var data:Array<Map<String,String>> = Data.getWebScreened();
+		var length:Int = data.length;
+		
+		for (i in 0...length) {
+			
+			var info:Map<String,String> = data[i];
+			info['staff'] = getStaff(info['id']);
+			
+		}
+		
+		trace('Screened List : ' + length);
+		Csv.export(data);
+		
+	}
+	
+	/* =======================================================================
+	Get Staff
+	========================================================================== */
+	private static function getStaff(clientID:String):String {
+		
+		var staff:Dynamic;
+		var staffID:String = DB.supports[clientID];
+		
+		if (staffID == null) {
+			
+			staff = Handy.shuffleArray(DB.staffs)[0];
+			staffID = staff.id;
+
+			DB.supports[clientID] = staffID;
+			DB.insertSupport(clientID,staffID);
+			
+		} else {
+			
+			staff = DB.staffMap[staffID];
+			
+		}
+		
+		return staff.lastname;
 		
 	}
 	
