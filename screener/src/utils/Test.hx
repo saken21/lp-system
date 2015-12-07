@@ -1,4 +1,4 @@
-package;
+package src.utils;
 
 class Test {
 	

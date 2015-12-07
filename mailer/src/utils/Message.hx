@@ -14,9 +14,7 @@ class Message {
 	/* =======================================================================
 	Public - Set
 	========================================================================== */
-	public static function set(data:Array<Dynamic>):Void {
-		
-		return;
+	public static function set(names:Array<String>,data:Array<Dynamic>):Void {
 		
 		_counter = 0;
 		
@@ -38,8 +36,8 @@ class Message {
 			
 		}
 		
-		//normal = map[Main.CAMPAIGN_LIST[0]];
-		//first  = map[Main.CAMPAIGN_LIST[1]];
+		normal = map[names[0]];
+		first  = map[names[1]];
 		
 	}
 	

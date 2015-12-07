@@ -9,7 +9,6 @@ class DB {
 	public static var messages (default,null):Array<Dynamic>;
 	public static var staffs   (default,null):Array<Dynamic>;
 	public static var staffMap (default,null):Map<String,Dynamic>;
-	public static var supports (default,null):Map<String,Dynamic>;
 	public static var pages    (default,null):Array<Dynamic>;
 	
 	private static var _func   :Void->Void;
@@ -27,24 +26,24 @@ class DB {
 		
 		Dom.jWindow.on('loadDB',onLoaded);
 		
-		//ajax('messages',['name','subject','header','body','footer'],getWhere(Main.CAMPAIGN_LIST));
 		ajax('staffs',['id','lastname','firstname','mailaddress']);
-		ajax('supports',['client_id','staff_id']);
 		ajax('pages',['id','url']);
 		
 	}
 	
 		/* =======================================================================
-		Public - Load List
+		Public - Load Message
 		========================================================================== */
-		public static function loadScreenedList(name:String,func:Void->Void):Void {
-
-			Ajax.getData('screenedLists',['client_id_list'],function(data:Array<Dynamic>):Void {
-
-				var array:Array<String> = data[0].client_id_list.split(',');
-				trace('対象件数 : ' + array.length);
-
-			},'name = "' + name + '"');
+		public static function loadMessage(names:Array<String>,func:Void->Void):Void {
+			
+			var columns:Array<String> = ['name','subject','header','body','footer'];
+			
+			Ajax.getData('messages',columns,function(data:Array<Dynamic>):Void {
+				
+				Message.set(names,data);
+				func();
+			
+			},getWhere(names));
 			
 		}
 	
@@ -104,13 +103,9 @@ class DB {
 		_counter--;
 		if (_counter > 0) return;
 		
-		messages  = _map['messages'];
-		staffs    = _map['staffs'];
-		staffMap  = getMap(staffs,'id');
-		supports  = getMap(_map['supports'],'client_id','staff_id');
-		pages     = _map['pages'];
-		
-		Message.set(messages);
+		staffs   = _map['staffs'];
+		staffMap = getMap(staffs,'lastname');
+		pages    = _map['pages'];
 		
 		_func();
 		

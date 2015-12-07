@@ -3,4 +3,3 @@
 -lib createjs
 -cp src
 -cp ../../../../haxe/
--cp ../library/

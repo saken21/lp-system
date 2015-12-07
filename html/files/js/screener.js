@@ -135,18 +135,6 @@ StringTools.__name__ = true;
 StringTools.replace = function(s,sub,by) {
 	return s.split(sub).join(by);
 };
-var Test = function() { };
-Test.__name__ = true;
-Test.traceHeader = function(array) {
-	var strings = [];
-	var _g1 = 0;
-	var _g = array.length;
-	while(_g1 < _g) {
-		var p = _g1++;
-		strings.push(p + ":" + array[p]);
-	}
-	console.log(strings.join(","));
-};
 var haxe = {};
 haxe.Http = function(url) {
 	this.url = url;
@@ -643,6 +631,7 @@ src.components.Screener.getInfo = function(array) {
 	if(array.length < 9) return null;
 	var id = array[0];
 	var subID = array[1];
+	var date = array[2];
 	var corporate = src.components.Screener.getCorporate(array[5]);
 	var name = src.components.Screener.getName(array[6],array[7]);
 	var mail = src.components.Screener.getMailaddress(array[9]);
@@ -653,6 +642,7 @@ src.components.Screener.getInfo = function(array) {
 	var _g = new haxe.ds.StringMap();
 	_g.set("id",id);
 	_g.set("subID",subID);
+	_g.set("date",date);
 	_g.set("corporate",corporate);
 	_g.set("name",name);
 	_g.set("mail",mail);
@@ -756,7 +746,7 @@ src.components.View.onDropped = function(data) {
 	src.components.View._jFilename.text(src.components.View._dragAndDrop.getFilename());
 	var array = data.split("\n");
 	src.components.View.empty(array);
-	Test.traceHeader(array[0].split("\t"));
+	src.utils.Test.traceHeader(array[0].split("\t"));
 	console.log("All : " + array.length);
 	src.utils.ER.set(src.components.View._jNgWord.prop("value"));
 	src.components.Screener.ready();
@@ -846,11 +836,12 @@ src.utils.Csv.getAdjusted = function(data) {
 		var info = data[i];
 		var id = info.get("id");
 		var subID = info.get("subID");
+		var date = info.get("date");
 		var corporate = info.get("corporate");
 		var name = info.get("name");
 		var mail = info.get("mail");
 		var staff = info.get("staff");
-		array.push(id + "\t" + subID + "\t" + corporate + "\t" + name + "\t" + mail + "\t" + staff);
+		array.push(id + "\t" + subID + "\t" + date + "\t" + corporate + "\t" + name + "\t" + mail + "\t" + staff);
 	}
 	return array;
 };
@@ -981,6 +972,18 @@ src.utils.ER.getByText = function(value) {
 	if(value.length == 0) return null;
 	value = new EReg("\n","g").replace(value,"");
 	return new EReg(new EReg(",","g").replace(value,"|"),"i");
+};
+src.utils.Test = function() { };
+src.utils.Test.__name__ = true;
+src.utils.Test.traceHeader = function(array) {
+	var strings = [];
+	var _g1 = 0;
+	var _g = array.length;
+	while(_g1 < _g) {
+		var p = _g1++;
+		strings.push(p + ":" + array[p]);
+	}
+	console.log(strings.join(","));
 };
 var $_, $fid = 0;
 function $bind(o,m) { if( m == null ) return null; if( m.__id__ == null ) m.__id__ = $fid++; var f; if( o.hx__closures__ == null ) o.hx__closures__ = {}; else f = o.hx__closures__[m.__id__]; if( f == null ) { f = function(){ return f.method.apply(f.scope, arguments); }; f.scope = o; f.method = m; o.hx__closures__[m.__id__] = f; } return f; }

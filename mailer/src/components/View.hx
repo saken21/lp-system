@@ -5,15 +5,13 @@ import jp.saken.utils.Handy;
 import jp.saken.utils.Dom;
 import jp.saken.ui.DragAndDrop;
 import src.utils.DB;
-import Test;
+import src.utils.Data;
 
 class View {
 	
 	private static var _jFilename  :JQuery;
-	private static var _jListName  :JQuery;
-	private static var _jSteps     :JQuery;
+	private static var _jForm      :JQuery;
 	private static var _jButtons   :JQuery;
-	private static var _jList      :JQuery;
 	private static var _dragAndDrop:DragAndDrop;
 	
 	/* =======================================================================
@@ -21,14 +19,12 @@ class View {
 	========================================================================== */
 	public static function init():Void {
 		
-		var jAll :JQuery = new JQuery('#all').show();
-		var jForm:JQuery = jAll.find('#form');
+		var jAll:JQuery = new JQuery('#all').show();
 		
 		_jFilename = jAll.find('#filename');
-		_jSteps    = jForm.find('.step');
-		_jListName = jForm.find('#list-name');
-		_jButtons  = jForm.find('button').on('click',onClick);
-		_jList     = jAll.find('#list');
+		_jForm     = jAll.find('#form');
+		
+		_jForm.find('.sendMail').on('click',sendMail);
 		
 		_dragAndDrop = new DragAndDrop(Dom.jWindow,onDropped);
 		
@@ -40,68 +36,71 @@ class View {
 	private static function onDropped(data:String):Void {
 		
 		_jFilename.text(_dragAndDrop.getFilename());
+		_jForm.show();
 		
-		var array:Array<String> = data.split('\n');
-		
-		Test.traceHeader(array[0].split('\t'));
-		trace('All : ' + array.length);
-		
-		showParts('getlist');
-		
-	}
-	
-	/* =======================================================================
-	On Click
-	========================================================================== */
-	private static function onClick(event:JqEvent):Void {
-		
-		var jTarget:JQuery = new JQuery(event.target);
-		
-		switch (jTarget.prop('class')) {
-			
-			case 'getlist'  : setScreenedList();
-			case 'sendmail' : sendMail();
-			
-		}
-		
-	}
-	
-	/* =======================================================================
-	Set Screened List
-	========================================================================== */
-	private static function setScreenedList():Void {
-		
-		var name:String = _jListName.prop('value');
-		
-		if (name.length < 1) {
-			
-			Handy.alert('対象リスト名を入力してください。');
-			return;
-			
-		}
-		
-		DB.loadScreenedList(name,function():Void {
-			
-			
-		});
+		Data.init(data.split('\n'));
 		
 	}
 	
 	/* =======================================================================
 	Send Mail
 	========================================================================== */
-	private static function sendMail():Void {
+	private static function sendMail(event:JqEvent):Void {
 		
+		var messageNames:Array<String> = getMessageNames();
 		
+		if (messageNames == null) {
+			
+			Handy.alert('メッセージ名を入力してください。');
+			return;
+			
+		}
+		
+		var testmail:String = _jForm.find('#test-mailaddress').prop('value');
+		
+		if (Dom.window.confirm('メールを送信します。\nよろしいですか？')) {
+			
+			if (testmail.length > 0) {
+				
+				execute(messageNames,testmail);
+				
+			} else {
+				
+				if (Dom.window.confirm('本番配信を行います。')) {
+					execute(messageNames,testmail);
+				}
+				
+			}
+			
+		}
 		
 	}
 	
 	/* =======================================================================
-	Show Parts
+	Execute
 	========================================================================== */
-	private static function showParts(key:String):Void {
+	private static function execute(messageNames:Array<String>,testmail:String):Void {
 		
-		_jSteps.filter('.' + key).show();
+		DB.loadMessage(messageNames,function():Void {
+			Mailer.send(testmail);
+		});
+		
+	}
+	
+	/* =======================================================================
+	Get Message Names
+	========================================================================== */
+	private static function getMessageNames():Array<String> {
+		
+		var messageName:String = _jForm.find('#message-name').prop('value');
+		if (messageName.length == 0) return null;
+		
+		var array:Array<String> = [messageName];
+		var isNeedFirst:Bool = _jForm.find('#is-need-first').is(':checked');
+		
+		if (isNeedFirst) array.push(messageName + '_f');
+		
+		return array;
 		
 	}
 	

@@ -101,6 +101,7 @@ class Screener {
 		
 		var id       :String = array[0];
 		var subID    :String = array[1];
+		var date     :String = array[2];
 		var corporate:String = getCorporate(array[5]);
 		var name     :String = getName(array[6],array[7]);
 		var mail     :String = getMailaddress(array[9]);
@@ -116,7 +117,7 @@ class Screener {
 			return null;
 		}
 		
-		return ['id'=>id, 'subID'=>subID, 'corporate'=>corporate, 'name'=>name, 'mail'=>mail, 'domain'=>domain];
+		return ['id'=>id, 'subID'=>subID, 'date'=>date, 'corporate'=>corporate, 'name'=>name, 'mail'=>mail, 'domain'=>domain];
 		
 	}
 	

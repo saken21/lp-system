@@ -33,12 +33,13 @@ class Csv {
 			
 			var id       :String  = info['id'];
 			var subID    :String  = info['subID'];
+			var date     :String  = info['date'];
 			var corporate:String  = info['corporate'];
 			var name     :String  = info['name'];
 			var mail     :String  = info['mail'];
 			var staff    :String  = info['staff'];
 			
-			array.push(id + '\t' + subID + '\t' + corporate + '\t' + name + '\t' + mail + '\t' + staff);
+			array.push(id + '\t' + subID + '\t' + date + '\t' + corporate + '\t' + name + '\t' + mail + '\t' + staff);
 			
 		}
 		

@@ -3,105 +3,81 @@ package src.components;
 import haxe.Http;
 import jp.saken.utils.Handy;
 import src.utils.Data;
-import src.utils.Csv;
 import src.utils.DB;
 import src.utils.Message;
 
 class Mailer {
 	
-	private static var _total   :Int;
-	private static var _counters:Map<String,Int>;
-	
 	/* =======================================================================
 	Public - Send
 	========================================================================== */
-	public static function send():Void {
-
-		var data:Array<Dynamic> = [];
-		var screenedData:Array<Dynamic> = Data.getScreened();
+	public static function send(testmail:String):Void {
 		
-		if (_total == null) _total = 1;
-		_counters = new Map();
+		var counter:Int = 0;
+		
+		var formatedData:Array<Array<String>> = Data.getFormated();
+		var isTest:Bool = testmail.length > 0;
 
-		for (p in 0...screenedData.length) {
-			data.push(ready(screenedData[p]));
+		for (i in 0...formatedData.length) {
+			
+			counter++;
+			
+			var replaced:Map<String,String> = getReplaced(formatedData[i],counter);
+			
+			if (isTest) {
+				
+				if (counter % 100 == 0) {
+					
+					replaced['mail'] = testmail;
+					request(replaced);
+					
+				}
+				
+			} else {
+				
+				request(replaced);
+
+				if (counter % 333 == 0) {
+					
+					replaced['mail'] = 'sakata@graphic.co.jp';
+					request(replaced);
+					
+				}
+				
+			}
+			
 		}
-		
-		trace(_counters);
-		
-		Csv.export(data);
 
 	}
 	
 	/* =======================================================================
-	Ready
+	Get Replaced
 	========================================================================== */
-	private static function ready(info:Dynamic):Dynamic {
+	private static function getReplaced(info:Array<String>,num:Int):Map<String,String> {
 		
-		var staff        :Dynamic = getStaff(info.id);
-		var staffLastname:String  = staff.lastname;
-		var staffFullname:String  = staffLastname + staff.firstname;
-		var staffAlphabet:String  = staff.mailaddress;
-		var staffMail    :String  = staffAlphabet + '@graphic.co.jp';
+		var date     :String = info[2];
+		var corporate:String = info[3];
+		var name     :String = info[4];
+		var mail     :String = info[5];
 		
-		var message:Map<String,String> = getMessage(info.date.length == 0);
+		var message:Map<String,String> = getMessage(date.length == 0);
+		var body:String = message['body'];
 		
-		var subject:String = message['subject'];
-		var body   :String = message['body'];
-
-		body = StringTools.replace(body,'##1',info.corporate);
-		body = StringTools.replace(body,'##2',info.name);
-		body = StringTools.replace(body,'##3',staffLastname);
+		var staff        :Dynamic = DB.staffMap[info[6]];
+		var staffName    :String  = staff.lastname;
+		var staffFullname:String  = staffName + ' ' + staff.firstname;
+		var staffAlphabet:String = staff.mailaddress;
+		var staffMail    :String = staffAlphabet + '@graphic.co.jp';
+		
+		body = StringTools.replace(body,'##1',corporate);
+		body = StringTools.replace(body,'##2',name);
+		body = StringTools.replace(body,'##3',staffName);
 		body = StringTools.replace(body,'##4',staffFullname);
 		body = StringTools.replace(body,'##5',staffMail);
-		body = StringTools.replace(body,'##6',Std.string(_total++));
+		body = StringTools.replace(body,'##6',Std.string(num));
 		body = StringTools.replace(body,'##7',staffAlphabet.substr(0,2));
-
-		request(staffFullname,staffMail,info.mail,subject,body);
 		
-		info.staffName = staffLastname;
-		
-		return info;
-		
-	}
-	
-	/* =======================================================================
-	Get Staff
-	========================================================================== */
-	private static function getStaff(clientID:Int):Dynamic {
-		
-		var staffID:Int = Std.parseInt(DB.supports[clientID]);
-		var staff:Dynamic;
-		
-		if (staffID == null) {
-			
-			staff   = Handy.shuffleArray(DB.staffs)[0];
-			staffID = staff.id;
-			
-			DB.supports[clientID] = staffID;
-			DB.insertSupport(clientID,staffID);
-			
-		} else {
-			
-			staff = DB.staffMap[staffID];
-			
-		}
-		
-		serCounters(staff.lastname + staff.firstname);
-		
-		return staff;
-		
-	}
-	
-	/* =======================================================================
-	Set Counter
-	========================================================================== */
-	private static function serCounters(value:String):Void {
-		
-		var counter:Int = _counters[value];
-		if (counter == null) counter = 0;
-
-		_counters[value] = ++counter;
+		return ['mail'=>mail,'subject'=>message['subject'],'body'=>body,'staffFullname'=>staffFullname,'staffMail'=>staffMail];
 		
 	}
 	
@@ -121,23 +97,17 @@ class Mailer {
 	/* =======================================================================
 	Request
 	========================================================================== */
-	private static function request(staffFullname:String,staffMail:String,to:String,subject:String,body:String):Void {
-		
-		if (Main.TEST_MAIL.length > 0) {
-			to = Main.TEST_MAIL;
-		}
-		
-		trace(to);
+	private static function request(map:Map<String,String>):Void {
 		
 		var http:Http = new Http('files/php/sendMail.php');
 		
 		http.onData = function(data:String):Void { trace(data); };
 		
-		http.setParameter('staffFullname',staffFullname);
-		http.setParameter('staffMail',staffMail);
-		http.setParameter('to',to);
-		http.setParameter('subject',subject);
-		http.setParameter('body',body);
+		http.setParameter('staffFullname',map['staffFullname']);
+		http.setParameter('staffMail',map['staffMail']);
+		http.setParameter('to',map['mail']);
+		http.setParameter('subject',map['subject']);
+		http.setParameter('body',map['body']);
 		
 		http.request(true);
 		
