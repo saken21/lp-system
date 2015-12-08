@@ -418,6 +418,9 @@ jp.saken.utils.Handy.__name__ = true;
 jp.saken.utils.Handy.alert = function(value) {
 	jp.saken.utils.Dom.window.alert(value);
 };
+jp.saken.utils.Handy.confirm = function(text,ok,cancel) {
+	if(jp.saken.utils.Dom.window.confirm(text)) ok(); else if(cancel != null) cancel();
+};
 jp.saken.utils.Handy.getPastDate = function(date,num) {
 	if(num == null) num = 30;
 	var second = HxOverrides.strDate(date).getTime() - num * 86400000;
@@ -589,7 +592,6 @@ src.components = {};
 src.components.Screener = function() { };
 src.components.Screener.__name__ = true;
 src.components.Screener.ready = function() {
-	src.components.Screener._mains = new haxe.ds.StringMap();
 	src.utils.Data.setLocalScreened(src.components.Screener.getLocalScreenedData());
 };
 src.components.Screener.start = function() {
@@ -683,6 +685,7 @@ src.components.Screener.isBadID = function(id,subID,corporate,mail,domain) {
 		if(corporate.indexOf(c) < 0 || mail.indexOf(d) < 0) return true;
 		if(HxOverrides.indexOf(m,mail,0) > -1) return true;
 		m.push(mail);
+		src.components.Screener._mains.get(id).m = m;
 	} else {
 		var v = { c : corporate, d : domain, m : [mail]};
 		src.components.Screener._mains.set(id,v);

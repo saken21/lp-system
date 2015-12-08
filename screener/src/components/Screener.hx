@@ -18,7 +18,6 @@ class Screener {
 	========================================================================== */
 	public static function ready():Void {
 
-		_mains = new Map();
 		Data.setLocalScreened(getLocalScreenedData());
 
 	}
@@ -194,6 +193,7 @@ class Screener {
 			if (m.indexOf(mail) > -1) return true;
 			
 			m.push(mail);
+			_mains[id].m = m;
 			
 		} else {
 			
