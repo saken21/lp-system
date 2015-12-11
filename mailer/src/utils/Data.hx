@@ -9,10 +9,25 @@ class Data {
 	========================================================================== */
 	public static function init(array:Array<String>):Void {
 		
+		var eReg:EReg = new EReg(DB.stopUsers.join('|'),'i');
+		
 		_formated = [];
 		
 		for (i in 0...array.length) {
-			_formated[i] = array[i].split('\t');
+			
+			var info:Array<String> = array[i].split('\t');
+			
+			if (eReg.match(info[5])) {
+				
+				trace('Stop User : ' + info[5]);
+				_formated = [];
+				
+				return;
+				
+			}
+			
+			_formated[i] = info;
+			
 		}
 		
 		trace('Total : ' + _formated.length);

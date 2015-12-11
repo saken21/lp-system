@@ -47,6 +47,13 @@ class View {
 	========================================================================== */
 	private static function sendMail(event:JqEvent):Void {
 		
+		if (Data.getFormated().length == 0) {
+			
+			Handy.alert('リストに誤りがあります。メール送信できません。');
+			return;
+			
+		}
+		
 		var messageNames:Array<String> = getMessageNames();
 		
 		if (messageNames == null) {

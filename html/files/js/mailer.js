@@ -395,6 +395,9 @@ jp.saken.utils.Handy.__name__ = true;
 jp.saken.utils.Handy.alert = function(value) {
 	jp.saken.utils.Dom.window.alert(value);
 };
+jp.saken.utils.Handy.confirm = function(text,ok,cancel) {
+	if(jp.saken.utils.Dom.window.confirm(text)) ok(); else if(cancel != null) cancel();
+};
 jp.saken.utils.Handy.getPastDate = function(date,num) {
 	if(num == null) num = 30;
 	var second = HxOverrides.strDate(date).getTime() - num * 86400000;
@@ -645,6 +648,10 @@ src.components.View.onDropped = function(data) {
 	src.utils.Data.init(data.split("\n"));
 };
 src.components.View.sendMail = function(event) {
+	if(src.utils.Data.getFormated().length == 0) {
+		jp.saken.utils.Handy.alert("リストに誤りがあります。メール送信できません。");
+		return;
+	}
 	var messageNames = src.components.View.getMessageNames();
 	if(messageNames == null) {
 		jp.saken.utils.Handy.alert("メッセージ名を入力してください。");
@@ -678,6 +685,7 @@ src.utils.DB.load = function(func) {
 	jp.saken.utils.Dom.jWindow.on("loadDB",src.utils.DB.onLoaded);
 	src.utils.DB.ajax("staffs",["id","lastname","firstname","mailaddress"]);
 	src.utils.DB.ajax("pages",["id","url"]);
+	src.utils.DB.ajax("stopUsers",["mailaddress"]);
 };
 src.utils.DB.loadMessage = function(names,func) {
 	var columns = ["name","subject","header","body","footer"];
@@ -727,6 +735,7 @@ src.utils.DB.onLoaded = function(event) {
 	src.utils.DB.staffs = src.utils.DB._map.get("staffs");
 	src.utils.DB.staffMap = src.utils.DB.getMap(src.utils.DB.staffs,"lastname");
 	src.utils.DB.pages = src.utils.DB._map.get("pages");
+	src.utils.DB.stopUsers = src.utils.DB._map.get("stopUsers");
 	src.utils.DB._func();
 };
 src.utils.DB.getMap = function(data,key,value) {
@@ -746,12 +755,19 @@ src.utils.DB.getMap = function(data,key,value) {
 src.utils.Data = function() { };
 src.utils.Data.__name__ = true;
 src.utils.Data.init = function(array) {
+	var eReg = new EReg(src.utils.DB.stopUsers.join("|"),"i");
 	src.utils.Data._formated = [];
 	var _g1 = 0;
 	var _g = array.length;
 	while(_g1 < _g) {
 		var i = _g1++;
-		src.utils.Data._formated[i] = array[i].split("\t");
+		var info = array[i].split("\t");
+		if(eReg.match(info[5])) {
+			console.log("Stop User : " + info[5]);
+			src.utils.Data._formated = [];
+			return;
+		}
+		src.utils.Data._formated[i] = info;
 	}
 	console.log("Total : " + src.utils.Data._formated.length);
 };

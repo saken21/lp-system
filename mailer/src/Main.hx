@@ -1,11 +1,11 @@
 /**
 * ================================================================================
 *
-* Mailer ver 1.00.00
+* Mailer ver 1.00.01
 *
 * Author : KENTA SAKATA
 * Since  : 2015/12/04
-* Update : 2015/12/07
+* Update : 2015/12/11
 *
 * Licensed under the MIT License
 * Copyright (c) Kenta Sakata

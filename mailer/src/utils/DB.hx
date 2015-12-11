@@ -10,6 +10,7 @@ class DB {
 	public static var staffs   (default,null):Array<Dynamic>;
 	public static var staffMap (default,null):Map<String,Dynamic>;
 	public static var pages    (default,null):Array<Dynamic>;
+	public static var stopUsers(default,null):Array<String>;
 	
 	private static var _func   :Void->Void;
 	private static var _map    :Map<String,Dynamic>;
@@ -28,6 +29,7 @@ class DB {
 		
 		ajax('staffs',['id','lastname','firstname','mailaddress']);
 		ajax('pages',['id','url']);
+		ajax('stopUsers',['mailaddress']);
 		
 	}
 	
@@ -103,9 +105,10 @@ class DB {
 		_counter--;
 		if (_counter > 0) return;
 		
-		staffs   = _map['staffs'];
-		staffMap = getMap(staffs,'lastname');
-		pages    = _map['pages'];
+		staffs    = _map['staffs'];
+		staffMap  = getMap(staffs,'lastname');
+		pages     = _map['pages'];
+		stopUsers = _map['stopUsers'];
 		
 		_func();
 		
