@@ -245,9 +245,11 @@ jp.saken.ui.DragAndDrop.prototype = {
 	,onDrop: function(event) {
 		var file = event.originalEvent.dataTransfer.files[0];
 		var fileReader = new FileReader();
-		this._filename = file.name;
-		fileReader.onload = $bind(this,this.onLoaded);
-		if(this._type == "text") fileReader.readAsText(file); else if(this._type == "image") fileReader.readAsDataURL(file);
+		if(file != null) {
+			this._filename = file.name;
+			fileReader.onload = $bind(this,this.onLoaded);
+			if(this._type == "text") fileReader.readAsText(file); else if(this._type == "image") fileReader.readAsDataURL(file);
+		}
 		this.cancel(event);
 		this._jTarget.removeClass("dragging").trigger("onDrop");
 		return false;
@@ -278,6 +280,15 @@ jp.saken.ui.DragAndDrop.prototype = {
 jp.saken.utils = {};
 jp.saken.utils.Ajax = function() { };
 jp.saken.utils.Ajax.__name__ = true;
+jp.saken.utils.Ajax.getIP = function(onLoaded) {
+	var http = new haxe.Http("files/php/" + "getIP.php");
+	jp.saken.utils.Ajax.setBusy();
+	http.onData = function(data) {
+		onLoaded(data);
+		jp.saken.utils.Ajax.unsetBusy();
+	};
+	http.request(true);
+};
 jp.saken.utils.Ajax.getDatetime = function(onLoaded) {
 	var http = new haxe.Http("files/php/" + "getDatetime.php");
 	jp.saken.utils.Ajax.setBusy();
@@ -568,12 +579,19 @@ src.components.Mailer.send = function(testmail) {
 	var counter = 0;
 	var formatedData = src.utils.Data.getFormated();
 	var isTest = testmail.length > 0;
+	var isGT = src.components.View.getIsGT();
 	var _g1 = 0;
 	var _g = formatedData.length;
 	while(_g1 < _g) {
 		var i = _g1++;
 		counter++;
 		var replaced = src.components.Mailer.getReplaced(formatedData[i],counter);
+		if(isGT) {
+			replaced.set("staffFullname","株式会社グラフィック");
+			"株式会社グラフィック";
+			replaced.set("staffMail","gt-gt@graphic.co.jp");
+			"gt-gt@graphic.co.jp";
+		}
 		if(isTest) {
 			if(counter % 100 == 0) {
 				replaced.set("mail",testmail);
@@ -641,6 +659,9 @@ src.components.View.init = function() {
 	src.components.View._jForm = jAll.find("#form");
 	src.components.View._jForm.find(".sendMail").on("click",src.components.View.sendMail);
 	src.components.View._dragAndDrop = new jp.saken.ui.DragAndDrop(jp.saken.utils.Dom.jWindow,src.components.View.onDropped);
+};
+src.components.View.getIsGT = function() {
+	return src.components.View._jForm.find("#is-gt")["is"](":checked");
 };
 src.components.View.onDropped = function(data) {
 	src.components.View._jFilename.text(src.components.View._dragAndDrop.getFilename());

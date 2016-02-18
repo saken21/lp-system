@@ -16,13 +16,22 @@ class Mailer {
 		var counter:Int = 0;
 		
 		var formatedData:Array<Array<String>> = Data.getFormated();
+		
 		var isTest:Bool = testmail.length > 0;
+		var isGT  :Bool = View.getIsGT();
 
 		for (i in 0...formatedData.length) {
 			
 			counter++;
 			
 			var replaced:Map<String,String> = getReplaced(formatedData[i],counter);
+			
+			if (isGT) {
+				
+				replaced['staffFullname'] = '株式会社グラフィック';
+				replaced['staffMail']     = 'gt-gt@graphic.co.jp';
+				
+			}
 			
 			if (isTest) {
 				
@@ -66,8 +75,8 @@ class Mailer {
 		var staff        :Dynamic = DB.staffMap[info[6]];
 		var staffName    :String  = staff.lastname;
 		var staffFullname:String  = staffName + ' ' + staff.firstname;
-		var staffAlphabet:String = staff.mailaddress;
-		var staffMail    :String = staffAlphabet + '@graphic.co.jp';
+		var staffAlphabet:String  = staff.mailaddress;
+		var staffMail    :String  = staffAlphabet + '@graphic.co.jp';
 		
 		body = StringTools.replace(body,'##1',corporate);
 		body = StringTools.replace(body,'##2',name);
