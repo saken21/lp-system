@@ -28,7 +28,7 @@ class Mailer {
 			
 			if (isGT) {
 				
-				replaced['staffFullname'] = 'お役に立ち隊実行委員会';
+				replaced['staffFullname'] = '';
 				replaced['staffMail']     = 'gt-gt@graphic.co.jp';
 				
 			}

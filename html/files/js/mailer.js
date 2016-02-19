@@ -587,8 +587,8 @@ src.components.Mailer.send = function(testmail) {
 		counter++;
 		var replaced = src.components.Mailer.getReplaced(formatedData[i],counter);
 		if(isGT) {
-			replaced.set("staffFullname","お役に立ち隊実行委員会");
-			"お役に立ち隊実行委員会";
+			replaced.set("staffFullname","");
+			"";
 			replaced.set("staffMail","gt-gt@graphic.co.jp");
 			"gt-gt@graphic.co.jp";
 		}
